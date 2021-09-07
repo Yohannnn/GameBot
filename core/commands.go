@@ -7,7 +7,7 @@ import (
 )
 
 // Handler for handling commands
-func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate){
+func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	if m.Author.ID == s.State.User.ID {
 		return
@@ -22,15 +22,14 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate){
 	command := strings.ToLower(strings.Split(m.Content, " ")[0][1:])
 	//args := strings.Split(m.Content, " ")[1:]
 
-
 	switch command {
 	case "ping":
 		_, err := s.ChannelMessageSend(m.ChannelID, "pong")
-		if err != nil{
+		if err != nil {
 			fmt.Println(err)
 		}
 	// PlayGame command
 	case "playgame":
-
+	case "gameinfo":
 	}
 }

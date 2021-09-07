@@ -3,11 +3,12 @@ package core
 // Game
 // Struct for a game
 type Game struct {
-	Function func(GameInfo)
+	Name         string
+	Function     func(GameInfo)
 	PreviewBoard [][]string
-	Guide string
-	Rules string
-	Color int32
+	Guide        string
+	Rules        string
+	Color        int
 }
 
 // GameInfo
@@ -19,4 +20,10 @@ type GameInfo struct {
 
 // Games
 // Map games names to their game struct
-var Games map[string]Game
+var Games = make(map[string]Game)
+
+// AddGame
+// Adds a game to the game map
+func AddGame(name string, game Game) {
+	Games[name] = game
+}

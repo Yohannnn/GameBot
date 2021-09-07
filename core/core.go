@@ -10,11 +10,15 @@ import (
 	"syscall"
 )
 
+// Session
+// The session of the bot
+//var Session *discordgo.Session
+
 // Log
-// logger for the bot
+// The logger for the bot
 var Log = tlog.NewTaggedLogger("BotCore", tlog.NewColor("38;5;111"))
 
-func Start() error{
+func Start() error {
 	// Load token
 	err := godotenv.Load("./.env")
 	if err != nil {
@@ -35,7 +39,6 @@ func Start() error{
 	if err != nil {
 		return err
 	}
-
 
 	Log.Info("Bot is now running.  Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
