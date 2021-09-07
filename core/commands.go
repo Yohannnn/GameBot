@@ -28,7 +28,9 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if err != nil {
 			fmt.Println(err)
 		}
-	// PlayGame command
+	// Switch case for handling commands
+	case "test":
+
 	case "playgame":
 	case "gameinfo":
 	}
