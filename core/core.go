@@ -12,7 +12,7 @@ import (
 
 // Session
 // The session of the bot
-//var Session *discordgo.Session
+var Session *discordgo.Session
 
 // Log
 // The logger for the bot
@@ -26,7 +26,7 @@ func Start() error {
 	}
 
 	//Create a new Discord session
-	Session, err := discordgo.New("Bot " + os.Getenv("Token"))
+	Session, err = discordgo.New("Bot " + os.Getenv("Token"))
 	if err != nil {
 		return err
 	}

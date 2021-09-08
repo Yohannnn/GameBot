@@ -6,7 +6,7 @@ type Game struct {
 	Name         string
 	Function     func(GameInfo)
 	PreviewBoard [][]string
-	Guide        string
+	Description  string
 	Rules        string
 	Color        int
 }

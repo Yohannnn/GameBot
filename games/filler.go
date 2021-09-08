@@ -16,8 +16,8 @@ func init() {
 		PreviewBoard: [][]string{
 			{""},
 		},
-		Guide: "Test Guide",
-		Rules: "Test Rules",
-		Color: 14495300,
+		Description: "Test Description",
+		Rules:       "Test Rules",
+		Color:       14495300,
 	})
 }

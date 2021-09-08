@@ -20,7 +20,7 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Parses the message for the command and arguments
 	command := strings.ToLower(strings.Split(m.Content, " ")[0][1:])
-	//args := strings.Split(m.Content, " ")[1:]
+	args := strings.Split(m.Content, " ")[1:]
 
 	switch command {
 	case "ping":
@@ -30,8 +30,26 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	// Switch case for handling commands
 	case "test":
-
+		embed := NewEmbed()
+		embed.SetTitle("Test Title")
+		embed.SetDescription("Test description")
+		embed.AddField("Test name", "Test value", true)
+		embed.SetColor(0)
+		_, err := Session.ChannelMessageSendEmbed(m.ChannelID, embed.MessageEmbed)
+		if err != nil {
+			Log.Error(err.Error())
+		}
 	case "playgame":
 	case "gameinfo":
+		game := Games[args[0]]
+		embed := NewEmbed()
+		embed.SetTitle(game.Name)
+		embed.SetDescription(game.Description)
+		embed.AddField("Rules", game.Rules, true)
+		embed.SetColor(game.Color)
+		_, err := Session.ChannelMessageSendEmbed(m.ChannelID, embed.MessageEmbed)
+		if err != nil {
+			Log.Error(err.Error())
+		}
 	}
 }
