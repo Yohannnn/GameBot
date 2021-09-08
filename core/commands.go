@@ -40,13 +40,38 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			Log.Error(err.Error())
 		}
 	case "playgame":
-	case "gameinfo":
+		var invChannelID string
+
+		//Pares args for game
 		game := Games[args[0]]
+		embed := NewEmbed()
+		embed.SetTitle(fmt.Sprintf("%s invite!", game.Name))
+		embed.SetColor(7909721)
+
+		//Sets invite channel and description
+		if len(args) > 2 {
+			embed.SetDescription(fmt.Sprintf("%s invited you to play %s. React with :white_check_mark: to accept.", m.Author.Username, game.Name))
+		} else {
+			embed.SetDescription(fmt.Sprintf("%s invited anyone %s. React with :white_check_mark: to accept.", m.Author.Username, game.Name))
+			invChannelID = m.ChannelID
+		}
+
+		_, err := Session.ChannelMessageSendEmbed(invChannelID, embed.MessageEmbed)
+		if err != nil {
+			Log.Error(err.Error())
+		}
+	case "gameinfo":
+		//Parses args for game
+		game := Games[args[0]]
+
+		//Formats embed message
 		embed := NewEmbed()
 		embed.SetTitle(game.Name)
 		embed.SetDescription(game.Description)
 		embed.AddField("Rules", game.Rules, true)
 		embed.SetColor(game.Color)
+
+		//Sends embed message
 		_, err := Session.ChannelMessageSendEmbed(m.ChannelID, embed.MessageEmbed)
 		if err != nil {
 			Log.Error(err.Error())

@@ -11,11 +11,11 @@ type Game struct {
 	Color        int
 }
 
-// GameInfo
-// Information about a currently active game
+//GameInfo
+//Contains information about a game
 type GameInfo struct {
 	GameBoard [][]string
-	PlayerIDs []string
+	GameStats map[string]string
 }
 
 // Games
