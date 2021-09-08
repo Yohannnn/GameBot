@@ -3,19 +3,20 @@ package core
 // Game
 // Struct for a game
 type Game struct {
-	Name         string
-	Function     func(GameInfo)
-	PreviewBoard [][]string
-	Description  string
-	Rules        string
-	Color        int
+	Name          string
+	Function      func(update GameUpdate)
+	StartingBoard [][]string
+	Description   string
+	Rules         string
+	Color         int
 }
 
-//GameInfo
-//Contains information about a game
-type GameInfo struct {
+//GameUpdate
+//Contains information a game update
+type GameUpdate struct {
 	GameBoard [][]string
 	GameStats map[string]string
+	Reactions [][]string
 }
 
 // Games

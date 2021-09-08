@@ -69,6 +69,7 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		embed.SetTitle(game.Name)
 		embed.SetDescription(game.Description)
 		embed.AddField("Rules", game.Rules, true)
+		embed.AddField("Board", "", true)
 		embed.SetColor(game.Color)
 
 		//Sends embed message
