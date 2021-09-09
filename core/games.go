@@ -20,7 +20,7 @@ type GameInfo struct {
 	Description  string
 	Rules        string
 	Color        int
-	PreviewBoard [][]string
+	ExampleBoard [][]string
 }
 
 //GameUpdate
@@ -48,12 +48,12 @@ func AddGame(startFunc func() *GameUpdate, updateFunc func(game *GameUpdate) *Ga
 
 //CreateGameInfo
 //Creates game info for a command
-func CreateGameInfo(name string, description string, rules string, color int, previewBoard [][]string) *GameInfo {
+func CreateGameInfo(name string, description string, rules string, color int, exampleBoard [][]string) *GameInfo {
 	gI := &GameInfo{
 		Name:         name,
 		Description:  description,
 		Rules:        rules,
-		PreviewBoard: previewBoard,
+		ExampleBoard: exampleBoard,
 		Color:        color,
 	}
 	return gI
