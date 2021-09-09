@@ -10,16 +10,16 @@ import (
 	"syscall"
 )
 
-// Session
-// The session of the bot
+//Session
+//The session of the bot
 var Session *discordgo.Session
 
-// Log
-// The logger for the bot
+//Log
+//The logger for the bot
 var Log = tlog.NewTaggedLogger("BotCore", tlog.NewColor("38;5;111"))
 
 func Start() error {
-	// Load token
+	//Load token
 	err := godotenv.Load("./.env")
 	if err != nil {
 		fmt.Println(err)
@@ -31,10 +31,10 @@ func Start() error {
 		return err
 	}
 
-	// Add Handlers
+	//Add Handlers
 	Session.AddHandler(commandHandler)
 
-	// Star discord session
+	//Star discord session
 	err = Session.Open()
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func Start() error {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
-	// Close session when finished
+	//Close session when finished
 	err = Session.Close()
 	return err
 }
