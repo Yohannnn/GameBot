@@ -16,7 +16,7 @@ func newEmbed() *embed {
 
 //sendEmbed
 //Sends the embed message
-func sendEmbed(ChannelID string, title string, description string, e embed) {
+func (e *embed) send(ChannelID string, title string, description string) {
 	if len(title) > 256 {
 		title = title[:256]
 	}
@@ -29,24 +29,6 @@ func sendEmbed(ChannelID string, title string, description string, e embed) {
 	if err != nil {
 		Log.Error(err.Error())
 	}
-}
-
-//setTitle
-//Sets the title of an embed
-func (e *embed) setTitle(title string) {
-	if len(title) > 256 {
-		title = title[:256]
-	}
-	e.Title = title
-}
-
-//setDescription
-//Sets the description of the embed
-func (e *embed) setDescription(description string) {
-	if len(description) > 2048 {
-		description = description[:2048]
-	}
-	e.Description = description
 }
 
 //addField

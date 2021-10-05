@@ -26,25 +26,20 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	switch command {
 
 	case "playgame":
-		var invChannelID string
 		//Pares args for gameInfo
 		game := Games[args[0]].Info
 		//Formats embed message
 		embed := newEmbed()
-		embed.setTitle(fmt.Sprintf("%s invite!", game.Name))
 		embed.setColor(7909721)
 		//Sets invite channel and description
 		if len(args) > 2 {
-			embed.setDescription(fmt.Sprintf("%s invited you to play %s. React with :white_check_mark: to accept.", m.Author.Username, game.Name))
+			embed.send(m.ChannelID, fmt.Sprintf("%s invite!", game.Name), fmt.Sprintf(
+				"%s invited you to play %s. React with :white_check_mark: to accept.",
+				m.Author.Username, game.Name))
 		} else {
-			embed.setDescription(fmt.Sprintf("%s invited anyone %s. React with :white_check_mark: to accept.", m.Author.Username, game.Name))
-			invChannelID = m.ChannelID
-		}
-		//Sends embed message
-		_, err := Session.ChannelMessageSendEmbed(invChannelID, embed.MessageEmbed)
-		if err != nil {
-			Log.Error(err.Error())
-			return
+			embed.send(m.ChannelID, fmt.Sprintf("%s invite!", game.Name),
+				fmt.Sprintf("%s invited anyone %s. React with :white_check_mark: to accept.",
+					m.Author.Username, game.Name))
 		}
 
 	case "gameinfo":
@@ -52,28 +47,15 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		embed := newEmbed()
 		//Checks if game exits
 		if _, ok := Games[args[0]]; !ok {
-			embed.setTitle("Error!")
-			embed.setDescription("The requested game does not exist")
 			embed.setColor(14495300)
-			_, err := Session.ChannelMessageSendEmbed(m.ChannelID, embed.MessageEmbed)
-			if err != nil {
-				Log.Error(err.Error())
-			}
-			return
+			embed.send(m.ChannelID, "Error!", "The requested game does not exist.")
 		}
 		//Parses args for gameInfo
 		gameInfo := Games[args[0]].Info
-		//Formats embed message
-		embed.setTitle(gameInfo.Name)
-		embed.setDescription(gameInfo.Description)
+		//Formats and sends embed message
 		embed.addField("Rules", gameInfo.Rules, true)
-		embed.addField("Board", formatBoard(gameInfo.PreviewBoard), true)
+		embed.addField("Board", formatBoard(gameInfo.ExampleBoard), true)
 		embed.setColor(gameInfo.Color)
-		//Sends embed message
-		_, err := Session.ChannelMessageSendEmbed(m.ChannelID, embed.MessageEmbed)
-		if err != nil {
-			Log.Error(err.Error())
-			return
-		}
+		embed.send(m.ChannelID, gameInfo.Name, gameInfo.Description)
 	}
 }
