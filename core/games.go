@@ -6,15 +6,22 @@ import (
 )
 
 //Game
-//The function and info of a game
+//The update function, start function, and game information for a game
 type Game struct {
-	StartFunc  func() *GameUpdate
-	UpdateFunc func(game *GameUpdate) *GameUpdate
+	UpdateFunc func(*GameUpdate)
+	StartFunc  func() GameState
 	Info       GameInfo
 }
 
+//GameState
+//The state of a game
+type GameState struct {
+	GameBoard [][]string
+	GameStats map[string]string
+}
+
 //GameInfo
-//Info about a game
+//Information about a game
 type GameInfo struct {
 	Name         string
 	Description  string
@@ -24,11 +31,12 @@ type GameInfo struct {
 }
 
 //GameUpdate
-//Info about a game update
+//Information about a game update
 type GameUpdate struct {
-	GameBoard [][]string
-	GameStats map[string]string
-	Reactions [][]string
+	PlayerState  GameState
+	OpponentSate GameState
+	OptionType   string
+	Option       []string
 }
 
 //Games
@@ -37,9 +45,8 @@ var Games = make(map[string]*Game)
 
 //AddGame
 //Adds a game to the game map
-func AddGame(startFunc func() *GameUpdate, updateFunc func(game *GameUpdate) *GameUpdate, gI *GameInfo) {
+func AddGame(updateFunc func(game *GameUpdate), gI *GameInfo) {
 	game := Game{
-		StartFunc:  startFunc,
 		UpdateFunc: updateFunc,
 		Info:       *gI,
 	}
@@ -47,7 +54,7 @@ func AddGame(startFunc func() *GameUpdate, updateFunc func(game *GameUpdate) *Ga
 }
 
 //CreateGameInfo
-//Creates game info for a command
+//Creates game info for a game
 func CreateGameInfo(name string, description string, rules string, color int, exampleBoard [][]string) *GameInfo {
 	gI := &GameInfo{
 		Name:         name,

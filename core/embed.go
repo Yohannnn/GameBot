@@ -14,6 +14,23 @@ func newEmbed() *embed {
 	return &embed{&discordgo.MessageEmbed{}}
 }
 
+//sendEmbed
+//Sends the embed message
+func sendEmbed(ChannelID string, title string, description string, e embed) {
+	if len(title) > 256 {
+		title = title[:256]
+	}
+	e.Title = title
+	if len(description) > 2048 {
+		description = description[:2048]
+	}
+	e.Description = description
+	_, err := Session.ChannelMessageSendEmbed(ChannelID, e.MessageEmbed)
+	if err != nil {
+		Log.Error(err.Error())
+	}
+}
+
 //setTitle
 //Sets the title of an embed
 func (e *embed) setTitle(title string) {

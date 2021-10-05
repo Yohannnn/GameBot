@@ -32,9 +32,9 @@ var fillerInfo = bot.CreateGameInfo(
 )
 
 func fillerStart() *bot.GameUpdate {
+
 	return nil
 }
 
 func init() {
-	bot.AddGame(fillerStart, nil, fillerInfo)
 }
