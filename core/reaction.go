@@ -1,13 +1,13 @@
 package core
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+)
 
 //reactionHandler
 //Handles reactions for messages the bot has sent
-func reactionHandler(s *discordgo.Session, r discordgo.MessageReactionAdd) {
-	//Reactions added by the bot
-	var options []string
-
+func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+	//Gets the message that the reaction was put on
 	m, err := s.ChannelMessage(r.ChannelID, r.MessageID)
 	if err != nil {
 		Log.Error(err.Error())
@@ -18,10 +18,22 @@ func reactionHandler(s *discordgo.Session, r discordgo.MessageReactionAdd) {
 		return
 	}
 
-	//Parses the message for all options given by the bot
-	for _, e := range m.Reactions {
-		if e.Me {
-			options = append(options, e.Emoji.ID)
+	//Checks if the emoji is the confirmation emoji
+	if r.Emoji.Name != "✅" {
+		return
+	}
+
+	//Checks the message is a game invite
+	if m.Embeds[0].Title[7:] == "Invite!" {
+		//startUpdate := Games[strings.Split(m.Embeds[0].Title, " ")[0]].StartFunc
+	}
+
+	//Checks if the reaction was an option given by the bot
+	for i, e := range m.Reactions {
+		if e.Emoji.ID == r.Emoji.ID && e.Me {
+			break
+		} else if i == len(m.Reactions) {
+			return
 		}
 	}
 }

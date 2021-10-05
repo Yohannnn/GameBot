@@ -33,6 +33,7 @@ func Start() error {
 
 	//Add Handlers
 	Session.AddHandler(commandHandler)
+	Session.AddHandler(reactionHandler)
 
 	//Star discord session
 	err = Session.Open()

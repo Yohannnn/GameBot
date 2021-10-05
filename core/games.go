@@ -9,15 +9,15 @@ import (
 //The update function, start function, and game information for a game
 type Game struct {
 	UpdateFunc func(GameInput) GameUpdate
-	StartFunc  func() GameState
+	StartFunc  func() GameUpdate
 	Info       *GameInfo
 }
 
 //GameState
 //The state of a game
 type GameState struct {
-	GameBoard [][]string
-	GameStats map[string]string
+	Board [][]string
+	Stats map[string]string
 }
 
 //GameInfo
@@ -55,7 +55,7 @@ var Games = make(map[string]Game)
 
 //AddGame
 //Adds a game to the game map
-func AddGame(updateFunc func(GameInput) GameUpdate, startFunc func() GameState, gI *GameInfo) {
+func AddGame(updateFunc func(GameInput) GameUpdate, startFunc func() GameUpdate, gI *GameInfo) {
 	game := Game{
 		UpdateFunc: updateFunc,
 		StartFunc:  startFunc,
@@ -75,6 +75,40 @@ func CreateGameInfo(name string, description string, rules string, color int, ex
 		Color:        color,
 	}
 	return gI
+}
+
+//sendGameUpdate
+//Sends the updated game to the opponent
+func sendGameUpdate(update GameUpdate, local bool, playerID string, opponentID string) {
+	var stats string
+	var board string
+	//Creates a new embed
+	embed := newEmbed()
+
+	//Formats the game stats
+	for stat, value := range update.State.Stats {
+		stats += fmt.Sprintf("%s = %s\n", stat, value)
+	}
+	embed.addField("Game Stats:", stats, true)
+
+	//Formats the game board
+	for _, l := range update.State.Board {
+		var line string
+		for _, e := range l {
+			line += fmt.Sprintf(":%s:", e)
+		}
+		board += line + "\n"
+		line = ""
+	}
+	embed.addField("Board", board, true)
+
+	//Adds option message
+	switch update.OptionType {
+	case "Select":
+		embed.addField("Input", "Select an option", false)
+	case "Coordinate":
+		embed.addField("Input", "Select a coordinate", false)
+	}
 }
 
 //formatBoard
