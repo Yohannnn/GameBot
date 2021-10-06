@@ -36,11 +36,11 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if len(args) > 2 {
 			newMessage = embed.send(m.ChannelID, fmt.Sprintf("%s invite!", game.Name), fmt.Sprintf(
 				"%s invited you to play %s! React with ✅ to accept.",
-				m.Author.Username, game.Name))
+				m.Author.Mention(), game.Name))
 		} else {
-			newMessage = embed.send(m.ChannelID, fmt.Sprintf("%s invite!", game.Name),
+			newMessage = embed.send(m.ChannelID, fmt.Sprintf("%s Invite!", game.Name),
 				fmt.Sprintf("%s invited anyone to play %s! React with ✅ to accept.",
-					m.Author.Username, game.Name))
+					m.Author.Mention(), game.Name))
 		}
 		//Adds confirmation emoji
 		err := Session.MessageReactionAdd(m.ChannelID, newMessage.ID, "✅")

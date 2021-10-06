@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"strings"
 )
 
@@ -42,8 +43,6 @@ type GameInput struct {
 //GameUpdate
 //An update to a game
 type GameUpdate struct {
-	Win        bool
-	Local      bool
 	Type       string
 	State      GameState
 	OptionType string
@@ -80,21 +79,26 @@ func CreateGameInfo(name string, description string, rules string, color int, ex
 
 //sendGameUpdate
 //Sends the updated game to the opponent
-func sendGameUpdate(info *GameInfo, update GameUpdate, playerName string, opponentID string) {
+func sendGameUpdate(info *GameInfo, update GameUpdate, playerID string, opponentID string, currentGameID string) {
 	var stats string
 	var board string
 
 	//Gets the dm channel for the opponent
-	channel, err := Session.UserChannelCreate(opponentID)
+	opponentChannel, err := Session.UserChannelCreate(opponentID)
 	if err != nil {
 		Log.Error(err.Error())
+		return
+	}
+
+	//Gets the dm channel for the player
+	playerChannel, err := Session.UserChannelCreate(playerID)
+	if err != nil {
+		Log.Error(err.Error())
+		return
 	}
 
 	//Creates a new embed
 	embed := newEmbed()
-
-	//Sets the color of the embed
-	embed.setColor(info.Color)
 
 	//Formats the game stats
 	for stat, value := range update.State.Stats {
@@ -113,6 +117,20 @@ func sendGameUpdate(info *GameInfo, update GameUpdate, playerName string, oppone
 	}
 	embed.addField("Board", board, true)
 
+	//Checks the type of update
+	switch update.Type {
+	case "playerwin":
+		embed.setTitle("You Won!")
+		embed.setDescription(fmt.Sprintf("You won your %s game against <@%s>", info.Name, playerID))
+		embed.setColor(16632664)
+		_, err = Session.ChannelMessageEditEmbed(playerChannel.ID, playerID, embed.MessageEmbed)
+		if err != nil {
+			Log.Error(err.Error())
+			return
+		}
+		return
+	}
+
 	//Adds option field
 	switch update.OptionType {
 	case "Select":
@@ -122,7 +140,7 @@ func sendGameUpdate(info *GameInfo, update GameUpdate, playerName string, oppone
 	}
 
 	//Sends message
-	m := embed.send(channel.ID, info.Name, fmt.Sprintf("Playing against %s", playerName))
+	m := embed.send(channel.ID, info.Name, fmt.Sprintf("Playing against <@%s>", playerID))
 
 	//Adds the reactions
 	for _, e := range update.Options {

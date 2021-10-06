@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"strings"
 )
 
 //reactionHandler
@@ -25,7 +26,9 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 
 	//Checks the message is a game invite
 	if m.Embeds[0].Title[7:] == "Invite!" {
-		//startUpdate := Games[strings.Split(m.Embeds[0].Title, " ")[0]].StartFunc
+		game := Games[strings.Split(m.Embeds[0].Title, " ")[0]]
+		startUpdate := game.StartFunc
+		sendGameUpdate(game.Info, startUpdate(), m.Embeds[0].Description)
 	}
 
 	//Checks if the reaction was an option given by the bot
