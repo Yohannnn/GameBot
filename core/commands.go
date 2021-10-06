@@ -8,6 +8,8 @@ import (
 
 //Handler for handling commands
 func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	var newMessage *discordgo.Message
+
 	//Ignore all messages created by the bot itself
 	if m.Author.ID == s.State.User.ID {
 		return
@@ -32,13 +34,19 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		embed.setColor(7909721)
 		//Sets invite channel and description
 		if len(args) > 2 {
-			embed.send(m.ChannelID, fmt.Sprintf("%s invite!", game.Name), fmt.Sprintf(
-				"%s invited you to play %s. React with :white_check_mark: to accept.",
+			newMessage = embed.send(m.ChannelID, fmt.Sprintf("%s invite!", game.Name), fmt.Sprintf(
+				"%s invited you to play %s! React with ✅ to accept.",
 				m.Author.Username, game.Name))
 		} else {
-			embed.send(m.ChannelID, fmt.Sprintf("%s invite!", game.Name),
-				fmt.Sprintf("%s invited anyone %s. React with :white_check_mark: to accept.",
+			newMessage = embed.send(m.ChannelID, fmt.Sprintf("%s invite!", game.Name),
+				fmt.Sprintf("%s invited anyone to play %s! React with ✅ to accept.",
 					m.Author.Username, game.Name))
+		}
+		//Adds confirmation emoji
+		err := Session.MessageReactionAdd(m.ChannelID, newMessage.ID, "✅")
+		if err != nil {
+			Log.Error(err.Error())
+			return
 		}
 
 	case "gameinfo":
