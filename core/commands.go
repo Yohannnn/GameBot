@@ -24,7 +24,6 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	//Switch case for handling commands
 	switch command {
-
 	case "playgame":
 		//Pares args for gameInfo
 		game := Games[args[0]].Info

@@ -33,8 +33,8 @@ type GameInfo struct {
 //GameInput
 //Information about a games state and the players input
 type GameInput struct {
-	PlayerState  *GameState
-	OpponentSate *GameState
+	PlayerState  GameState
+	OpponentSate GameState
 	OptionType   string
 	Option       []string
 }
@@ -43,10 +43,11 @@ type GameInput struct {
 //An update to a game
 type GameUpdate struct {
 	Win        bool
+	Local      bool
 	Type       string
-	State      *GameState
+	State      GameState
 	OptionType string
-	Option     []string
+	Options    []string
 }
 
 //Games
@@ -79,11 +80,21 @@ func CreateGameInfo(name string, description string, rules string, color int, ex
 
 //sendGameUpdate
 //Sends the updated game to the opponent
-func sendGameUpdate(update GameUpdate, local bool, playerID string, opponentID string) {
+func sendGameUpdate(info *GameInfo, update GameUpdate, playerName string, opponentID string) {
 	var stats string
 	var board string
+
+	//Gets the dm channel for the opponent
+	channel, err := Session.UserChannelCreate(opponentID)
+	if err != nil {
+		Log.Error(err.Error())
+	}
+
 	//Creates a new embed
 	embed := newEmbed()
+
+	//Sets the color of the embed
+	embed.setColor(info.Color)
 
 	//Formats the game stats
 	for stat, value := range update.State.Stats {
@@ -102,12 +113,29 @@ func sendGameUpdate(update GameUpdate, local bool, playerID string, opponentID s
 	}
 	embed.addField("Board", board, true)
 
-	//Adds option message
+	//Adds option field
 	switch update.OptionType {
 	case "Select":
 		embed.addField("Input", "Select an option", false)
 	case "Coordinate":
 		embed.addField("Input", "Select a coordinate", false)
+	}
+
+	//Sends message
+	m := embed.send(channel.ID, info.Name, fmt.Sprintf("Playing against %s", playerName))
+
+	//Adds the reactions
+	for _, e := range update.Options {
+		err = Session.MessageReactionAdd(channel.ID, m.ID, e)
+		if err != nil {
+			Log.Error(err.Error())
+			return
+		}
+	}
+	err = Session.MessageReactionAdd(channel.ID, m.ID, "✅")
+	if err != nil {
+		Log.Error(err.Error())
+		return
 	}
 }
 
