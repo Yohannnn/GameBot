@@ -43,10 +43,17 @@ type GameInput struct {
 //GameUpdate
 //An update to a game
 type GameUpdate struct {
-	Type       string
-	State      GameState
-	OptionType string
-	Options    []string
+	Type   string
+	State  GameState
+	Option Option
+}
+
+//Option
+//An option for a game update
+type Option struct {
+	Type      string
+	Name      string
+	Reactions []string
 }
 
 //Games
@@ -79,7 +86,7 @@ func CreateGameInfo(name string, description string, rules string, color int, ex
 
 //sendGameUpdate
 //Sends the updated game to the opponent
-func sendGameUpdate(info *GameInfo, update GameUpdate, playerID string, opponentID string, currentGameID string) {
+func sendGameUpdate(info *GameInfo, update GameUpdate, playerID string, opponentID string) {
 	var stats string
 	var board string
 
@@ -122,18 +129,12 @@ func sendGameUpdate(info *GameInfo, update GameUpdate, playerID string, opponent
 	case "playerwin":
 		embed.setTitle("You Won!")
 		embed.setDescription(fmt.Sprintf("You won your %s game against <@%s>", info.Name, playerID))
-		embed.setColor(16632664)
-		_, err = Session.ChannelMessageEditEmbed(playerChannel.ID, playerID, embed.MessageEmbed)
-		if err != nil {
-			Log.Error(err.Error())
-			return
-		}
-		return
+		embed.setColor(Yellow)
 	}
 
 	//Adds option field
-	switch update.OptionType {
-	case "Select":
+	switch update.Option.Type {
+	case "select":
 		embed.addField("Input", "Select an option", false)
 	case "Coordinate":
 		embed.addField("Input", "Select a coordinate", false)

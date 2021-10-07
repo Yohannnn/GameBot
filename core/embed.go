@@ -2,6 +2,18 @@ package core
 
 import "github.com/bwmarrin/discordgo"
 
+//Colors
+const (
+	Red    = 14495300
+	Brown  = 12675407
+	Orange = 16027660
+	Yellow = 16632664
+	Green  = 7909721
+	Blue   = 5614830
+	Purple = 11177686
+	White  = 15132648
+)
+
 //embed
 //Struct for response
 type embed struct {
