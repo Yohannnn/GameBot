@@ -28,30 +28,21 @@ func newEmbed() *embed {
 
 //send
 //Sends the embed message
-func (e *embed) send(ChannelID string) *discordgo.Message {
-	m, err := Session.ChannelMessageSendEmbed(ChannelID, e.MessageEmbed)
+func (e *embed) send(title string, description string, channelID string) *discordgo.Message {
+	if len(title) > 256 {
+		title = title[:256]
+	}
+	e.Title = title
+
+	if len(description) > 256 {
+		description = description[:256]
+	}
+	e.Description = description
+	m, err := Session.ChannelMessageSendEmbed(channelID, e.MessageEmbed)
 	if err != nil {
 		Log.Error(err.Error())
 	}
 	return m
-}
-
-//setTitle
-//Sets the title of the embed
-func (e *embed) setTitle(title string) {
-	if len(title) > 256 {
-		title = title[:256]
-	}
-	e.Title = title
-}
-
-//setDescription
-//Sets the title of the embed
-func (e *embed) setDescription(title string) {
-	if len(title) > 256 {
-		title = title[:256]
-	}
-	e.Title = title
 }
 
 //addField
@@ -73,6 +64,16 @@ func (e *embed) addField(name string, value string, inline bool) {
 		Value:  value,
 		Inline: inline,
 	})
+}
+
+//setFooter
+//Sets the footer of an embed
+func (e *embed) setFooter(text string, iconURL string, proxyIconURL string) {
+	e.Footer = &discordgo.MessageEmbedFooter{
+		Text:         text,
+		IconURL:      iconURL,
+		ProxyIconURL: proxyIconURL,
+	}
 }
 
 //setColor

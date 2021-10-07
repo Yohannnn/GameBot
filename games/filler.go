@@ -31,26 +31,12 @@ var fillerInfo = bot.CreateGameInfo(
 	},
 )
 
-func fillerUpdate(input bot.GameInput) bot.GameUpdate {
-	return bot.GameUpdate{
-		Win:        false,
-		Local:      false,
-		Type:       "",
-		State:      bot.GameState{},
-		OptionType: "",
-		Options:    nil,
-	}
+func fillerUpdate(input bot.GameInput) (bot.GameUpdate, string) {
+	return bot.GameUpdate{}, ""
 }
 
 func fillerStart() bot.GameUpdate {
-	return bot.GameUpdate{
-		Win:        false,
-		Local:      false,
-		Type:       "",
-		State:      bot.GameState{},
-		OptionType: "",
-		Options:    nil,
-	}
+	return bot.GameUpdate{}
 }
 
 func init() {

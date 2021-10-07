@@ -2,8 +2,15 @@ package core
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"strings"
 )
+
+//Option
+//An option for a game update
+type Option struct {
+	Type      string
+	Name      string
+	Reactions []string
+}
 
 //reactionHandler
 //Handles reactions for messages the bot has sent
@@ -26,9 +33,9 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 
 	//Checks the message is a game invite
 	if m.Embeds[0].Title[7:] == "Invite!" {
-		game := Games[strings.Split(m.Embeds[0].Title, " ")[0]]
-		startUpdate := game.StartFunc
-		sendGameUpdate(game.Info, startUpdate(), m.Embeds[0].Description)
+		//game := Games[strings.Split(m.Embeds[0].Title, " ")[0]]
+		//startUpdate := game.StartFunc
+		//sendGameUpdate(game.Info, startUpdate(), m.Embeds[0].Description)
 	}
 
 	//Checks if the reaction was an option given by the bot

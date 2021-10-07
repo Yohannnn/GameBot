@@ -26,12 +26,22 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	//Switch case for handling commands
 	switch command {
+	case "test":
+		embed := newEmbed()
+		embed.send("Test", "✅", m.ChannelID)
+		err := Session.MessageReactionAdd(m.ChannelID, newMessage.ID, "895768149092364338")
+		if err != nil {
+			Log.Error(err.Error())
+			return
+		}
 	case "playgame":
 		//Pares args for gameInfo
 		game := Games[args[0]].Info
+
 		//Formats embed message
 		embed := newEmbed()
 		embed.setColor(7909721)
+
 		//Sets invite channel and description
 		if len(args) > 2 {
 			newMessage = embed.send(m.ChannelID, fmt.Sprintf("%s invite!", game.Name), fmt.Sprintf(
@@ -42,6 +52,7 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				fmt.Sprintf("%s invited anyone to play %s! React with ✅ to accept.",
 					m.Author.Mention(), game.Name))
 		}
+
 		//Adds confirmation emoji
 		err := Session.MessageReactionAdd(m.ChannelID, newMessage.ID, "✅")
 		if err != nil {
