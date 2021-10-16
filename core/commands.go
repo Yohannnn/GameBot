@@ -8,6 +8,8 @@ import (
 
 //Handler for handling commands
 func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	//Defers panic to error handler
+	defer handleCommandError(m.GuildID, m.ChannelID, m.Author.ID)
 	var newMessage *discordgo.Message
 
 	//Ignore all messages created by the bot itself
@@ -28,8 +30,8 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	switch command {
 	case "test":
 		embed := newEmbed()
-		embed.send("Test", "✅", m.ChannelID)
-		err := Session.MessageReactionAdd(m.ChannelID, newMessage.ID, "895768149092364338")
+		newMessage := embed.send("Test", "<:test:895767957467185193>", m.ChannelID)
+		err := Session.MessageReactionAdd(m.ChannelID, newMessage.ID, "test:895767957467185193")
 		if err != nil {
 			Log.Error(err.Error())
 			return
@@ -76,4 +78,10 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		embed.setColor(gameInfo.Color)
 		embed.send(m.ChannelID, gameInfo.Name, gameInfo.Description)
 	}
+}
+func handleCommandError(gID string, cId string, uId string) {
+	if r := recover(); r != nil {
+		Log.Errorf("Message from %s in %s in %s caused: %s", uId, cId, gID, r)
+	}
+	return
 }

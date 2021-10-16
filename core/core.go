@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 	tlog "github.com/ubergeek77/tinylog"
@@ -22,7 +21,7 @@ func Start() error {
 	//Load token
 	err := godotenv.Load("./.env")
 	if err != nil {
-		fmt.Println(err)
+		Log.Error(err.Error())
 	}
 
 	//Create a new Discord session

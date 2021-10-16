@@ -4,14 +4,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-//Option
-//An option for a game update
-type Option struct {
-	Type      string
-	Name      string
-	Reactions []string
-}
-
 //reactionHandler
 //Handles reactions for messages the bot has sent
 func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
