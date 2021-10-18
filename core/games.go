@@ -42,9 +42,10 @@ type GameInput struct {
 //GameUpdate
 //An update to a game
 type GameUpdate struct {
-	Type   string
-	State  GameState
-	Option Option
+	Type        string
+	PlayerState GameState
+	OpState     GameState
+	Option      Option
 }
 
 //Games
@@ -77,7 +78,7 @@ func CreateGameInfo(name string, description string, rules string, color int, ex
 
 //CreateGameUpdate
 //Creates a game update to be sent to a player
-func CreateGameUpdate(Type string, State GameState, Option Option) GameUpdate {
+func CreateGameUpdate(Type string, PlayerState GameState, OpState GameState, Option Option) GameUpdate {
 	//Checks type
 	if !Contains([]string{"local", "global", "error", "playerwin", "opponentwin"}, Type) {
 		Log.Error("Invalid type for game update")
@@ -85,78 +86,12 @@ func CreateGameUpdate(Type string, State GameState, Option Option) GameUpdate {
 	}
 
 	gU := GameUpdate{
-		Type:   Type,
-		State:  State,
-		Option: Option,
+		Type:        Type,
+		PlayerState: PlayerState,
+		OpState:     OpState,
+		Option:      Option,
 	}
 	return gU
-}
-
-//gameUpdateLocal
-//Sends a local game update
-func gameUpdateLocal(info *GameInfo, update GameUpdate, playerID string, opponentID string, currentMessageID string) {
-	var stats string
-	var board string
-
-	//Gets the dm channel for the player
-	playerChannel, err := Session.UserChannelCreate(playerID)
-	if err != nil {
-		Log.Error(err.Error())
-		return
-	}
-
-	//Gets the old game message
-	message, err := Session.ChannelMessage(playerChannel.ID, currentMessageID)
-	if err != nil {
-		Log.Error(err.Error())
-		return
-	}
-
-	//Parses the old message for the embed
-	oldEmbed := message.Embeds[0]
-
-	//Creates new embed
-	embed := newEmbed()
-
-	//Formats the board
-	if update.State.Board == nil {
-		board = oldEmbed.Fields[0].Value
-	} else {
-		board = formatBoard(update.State.Board)
-	}
-	embed.addField("Board", board, true)
-
-	//Formats the stats
-	if update.State.Stats == nil {
-		stats = oldEmbed.Fields[1].Value
-	} else {
-		for stat, value := range update.State.Stats {
-			stats += fmt.Sprintf("%s = %s\n", stat, value)
-		}
-	}
-	embed.addField("Game Stats:", stats, true)
-
-	//Adds the selected options field
-	for _, field := range oldEmbed.Fields[2:] {
-		if field.Name == "Selected Options" {
-			embed.addField("Selected Options", field.Value, false)
-			break
-		}
-	}
-
-	//Formats option field
-	embed.addField(update.Option.Message, fmt.Sprintf("%s:%s", update.Option.Name, update.Option.Type), false)
-
-	//Adds gameID to footer
-	embed.setFooter(oldEmbed.Footer.Text, "", "")
-
-	//Sends the new message and deletes the old one
-	embed.send(info.Name, fmt.Sprintf("%s game against <@%s>", info.Name, opponentID), playerChannel.ID)
-	err = Session.ChannelMessageDelete(playerChannel.ID, currentMessageID)
-	if err != nil {
-		Log.Error(err.Error())
-		return
-	}
 }
 
 //gameUpdate
@@ -164,7 +99,7 @@ func gameUpdateLocal(info *GameInfo, update GameUpdate, playerID string, opponen
 func gameUpdate(info *GameInfo, update GameUpdate, playerID string, opponentID string, currentGameID string) {
 	var stats string
 	var board string
-
+	var opEmbed embed
 	//Gets the user struct of each player
 	player, err := Session.User(playerID)
 	if err != nil {
@@ -180,7 +115,7 @@ func gameUpdate(info *GameInfo, update GameUpdate, playerID string, opponentID s
 	if err != nil {
 		Log.Error(err.Error())
 	}
-	opponentChannel, err := Session.UserChannelCreate(opponent.ID)
+	opChannel, err := Session.UserChannelCreate(opponent.ID)
 	if err != nil {
 		Log.Error(err.Error())
 	}
@@ -195,72 +130,117 @@ func gameUpdate(info *GameInfo, update GameUpdate, playerID string, opponentID s
 	currentEmbed := message.Embeds[0]
 
 	//Creates a new embed
-	embed := newEmbed()
+	playerEmbed := newEmbed()
 
 	//Formats the board
-	if update.State.Board == nil {
+	if update.PlayerState.Board == nil {
 		board = currentEmbed.Fields[0].Value
 	} else {
-		board = formatBoard(update.State.Board)
+		board = formatBoard(update.PlayerState.Board)
 	}
-	embed.addField("Board", board, true)
+	playerEmbed.addField("Board", board, true)
 
 	//Formats the stats
-	if update.State.Stats == nil {
+	if update.PlayerState.Stats == nil {
 		stats = currentEmbed.Fields[1].Value
 	} else {
-		for stat, value := range update.State.Stats {
+		for stat, value := range update.PlayerState.Stats {
 			stats += fmt.Sprintf("%s = %s\n", stat, value)
 		}
+		playerEmbed.addField("Stats", stats, true)
+	}
+
+	if update.Type != "local" || update.Type != "global" {
+		//Creates a new embed
+		opEmbed := newEmbed()
+
+		//Formats the board
+		if update.OpState.Board == nil {
+			board = currentEmbed.Fields[0].Value
+		} else {
+			board = formatBoard(update.OpState.Board)
+		}
+		opEmbed.addField("Board", board, true)
+
+		//Formats the stats
+		if update.OpState.Stats == nil {
+			stats = currentEmbed.Fields[1].Value
+		} else {
+			for stat, value := range update.OpState.Stats {
+				stats += fmt.Sprintf("%s = %s\n", stat, value)
+			}
+		}
+		opEmbed.addField("Stats", stats, true)
 	}
 
 	//Checks the type of update
 	switch update.Type {
-	case "local":
-		embed.setColor(info.Color)
 
+	case "local":
 		//Adds the selected options field
 		for _, field := range currentEmbed.Fields[2:] {
 			if field.Name == "Selected Options" {
-				embed.addField("Selected Options", field.Value, false)
+				playerEmbed.addField("Selected Options", field.Value, false)
 				break
 			}
 		}
 
 		//Adds option field and gameID
-		embed.addField(update.Option.Message, fmt.Sprintf("%s:%s", update.Option.Name, update.Option.Type), false)
-		embed.setFooter(currentEmbed.Footer.Text, "", "")
+		playerEmbed.addField(update.Option.Message, update.Option.Name, false)
+		playerEmbed.setFooter(currentEmbed.Footer.Text, "", "")
 
 		//Sends the new message and deletes the old one
-		embed.send(info.Name, fmt.Sprintf("%s game against <@%s>", info.Name, opponentID), playerChannel.ID)
+		newMessage := playerEmbed.send(info.Name, fmt.Sprintf("%s game against %s", info.Name, opponent.Username), playerChannel.ID)
 		err = Session.ChannelMessageDelete(playerChannel.ID, currentGameID)
 		if err != nil {
 			Log.Error(err.Error())
 			return
 		}
 
+		//Adds the reactions to the message
+		addOption(update.Option, playerChannel.ID, newMessage.ID)
+
 	case "global":
+		playerEmbed.setColor(info.Color)
+		opEmbed.setColor(info.Color)
+		//Adds the selected options field
+		for _, field := range currentEmbed.Fields[2:] {
+			if field.Name == "Selected Options" {
+				playerEmbed.addField("Selected Options", field.Value, false)
+				break
+			}
+		}
+
+		//Sends the new message
+		newMessage := playerEmbed.send(info.Name, fmt.Sprintf("%s game against %s", info.Name, player.Username), opChannel.ID)
+
+		//Adds option field and gameID
+		playerEmbed.addField(update.Option.Message, update.Option.Name, false)
+		playerEmbed.setFooter(currentGameID, "", "")
+
+		//Adds the reactions to the message
+		addOption(update.Option, opChannel.ID, newMessage.ID)
 
 	case "playerwin":
-		embed.setColor(Yellow)
+		playerEmbed.setColor(Yellow)
 		err = Session.ChannelMessageDelete(playerChannel.ID, currentGameID)
 		if err != nil {
 			Log.Error(err.Error())
 		}
-		embed.send("You Won!", fmt.Sprintf("You won your %s game against <@%s>", info.Name, opponentID), playerChannel.ID)
-		embed.setColor(Red)
-		embed.send("You Lost!", fmt.Sprintf("You lost your %s game against <@%s>", info.Name, playerID), opponentChannel.ID)
+		playerEmbed.send("You Won!", fmt.Sprintf("You won your %s game against <@%s>", info.Name, opponentID), playerChannel.ID)
+		playerEmbed.setColor(Red)
+		playerEmbed.send("You Lost!", fmt.Sprintf("You lost your %s game against <@%s>", info.Name, playerID), opChannel.ID)
 		return
 
 	case "opwin":
-		embed.setColor(Red)
+		playerEmbed.setColor(Red)
 		err = Session.ChannelMessageDelete(playerChannel.ID, currentGameID)
 		if err != nil {
 			Log.Error(err.Error())
 		}
-		embed.send("You Won!", fmt.Sprintf("You won your %s game against %s", info.Name, playerID), opponent.Username)
-		embed.setColor(Red)
-		embed.send("You Lost!", fmt.Sprintf("You lost your %s game against %s", info.Name, opponentID), player.Username)
+		playerEmbed.send("You Won!", fmt.Sprintf("You won your %s game against %s", info.Name, playerID), opponent.Username)
+		playerEmbed.setColor(Red)
+		playerEmbed.send("You Lost!", fmt.Sprintf("You lost your %s game against %s", info.Name, opponentID), player.Username)
 		return
 
 	case "err":

@@ -53,22 +53,25 @@ var LetCord = map[int]string{
 //Option
 //An input for a game update
 type Option struct {
-	Name     string
-	Type     string
-	Message  string
-	Rollback bool
-	Cord     struct {
-		x     [2]int
-		y     [2]int
-		value [2]int
-	}
-	Select struct {
-		Options []string
-		value   string
+	Name      string
+	Message   string
+	Rollback  bool
+	Reactions []string
+}
+
+//CreateOption
+//Creates an option
+func CreateOption(name string, message string, rollback bool, reactions []string) Option {
+	return Option{
+		Name:      name,
+		Message:   message,
+		Rollback:  rollback,
+		Reactions: reactions,
 	}
 }
 
-//addAReactionOption to a message
+//addOption
+//Adds A Reaction Option to a message
 func addOption(option Option, channelID string, messageID string) {
 	if option.Rollback {
 		err := Session.MessageReactionAdd(channelID, messageID, "❌")
@@ -78,22 +81,11 @@ func addOption(option Option, channelID string, messageID string) {
 		}
 	}
 
-	switch option.Type {
-	case "select":
-		for _, e := range option.Select.Options {
-			err := Session.MessageReactionAdd(channelID, messageID, e)
-			if err != nil {
-				Log.Error(err.Error())
-				return
-			}
-		}
-	case "cord":
-		xArray := IntArray(option.Cord.x[0], option.Cord.x[1])
-		for _, x := range xArray {
-			err := Session.MessageReactionAdd(channelID, messageID, NumCord[x])
-			if err != nil {
-				Log.Error(err.Error())
-			}
+	for _, e := range option.Reactions {
+		err := Session.MessageReactionAdd(channelID, messageID, e)
+		if err != nil {
+			Log.Error(err.Error())
+			return
 		}
 	}
 
@@ -107,6 +99,12 @@ func addOption(option Option, channelID string, messageID string) {
 //reactionHandler
 //Handles reactions for messages the bot has sent
 func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+
+	//Ignores reactions added by the bot
+	if r.UserID == s.State.User.ID {
+		return
+	}
+
 	//Gets the message that the reaction was put on
 	m, err := s.ChannelMessage(r.ChannelID, r.MessageID)
 	if err != nil {
