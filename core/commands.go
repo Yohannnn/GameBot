@@ -30,8 +30,8 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	switch command {
 	case "test":
 		embed := newEmbed()
-		newMessage := embed.send("Test", "<:test:895767957467185193>", m.ChannelID)
-		err := Session.MessageReactionAdd(m.ChannelID, newMessage.ID, "test:895767957467185193")
+		newMessage := embed.send("Test", "2️⃣", m.ChannelID)
+		err := Session.MessageReactionAdd(m.ChannelID, newMessage.ID, "2️⃣")
 		if err != nil {
 			Log.Error(err.Error())
 			return

@@ -47,24 +47,6 @@ type GameUpdate struct {
 	Option Option
 }
 
-//Option
-//An input for a game update
-type Option struct {
-	Type     string
-	Name     string
-	Message  string
-	Rollback bool
-	Cord     struct {
-		x     [2]int
-		y     [2]int
-		value [2]int
-	}
-	Select struct {
-		Options []string
-		value   string
-	}
-}
-
 //Games
 //Map games names to their game struct
 var Games = make(map[string]Game)
@@ -234,28 +216,6 @@ func gameUpdate(info *GameInfo, update GameUpdate, playerID string, opponentID s
 
 	//Checks the type of update
 	switch update.Type {
-	case "playerwin":
-		embed.setColor(Yellow)
-		err = Session.ChannelMessageDelete(playerChannel.ID, currentGameID)
-		if err != nil {
-			Log.Error(err.Error())
-		}
-		embed.send("You Won!", fmt.Sprintf("You won your %s game against <@%s>", info.Name, opponentID), playerChannel.ID)
-		embed.setColor(Red)
-		embed.send("You Lost!", fmt.Sprintf("You lost your %s game against <@%s>", info.Name, playerID), opponentChannel.ID)
-		return
-
-	case "opwin":
-		embed.setColor(Red)
-		err = Session.ChannelMessageDelete(playerChannel.ID, currentGameID)
-		if err != nil {
-			Log.Error(err.Error())
-		}
-		embed.send("You Won!", fmt.Sprintf("You won your %s game against %s", info.Name, playerID), opponent.Username)
-		embed.setColor(Red)
-		embed.send("You Lost!", fmt.Sprintf("You lost your %s game against %s", info.Name, opponentID), player.Username)
-		return
-
 	case "local":
 		embed.setColor(info.Color)
 
@@ -279,10 +239,31 @@ func gameUpdate(info *GameInfo, update GameUpdate, playerID string, opponentID s
 			return
 		}
 
-	case "err":
-
 	case "global":
 
+	case "playerwin":
+		embed.setColor(Yellow)
+		err = Session.ChannelMessageDelete(playerChannel.ID, currentGameID)
+		if err != nil {
+			Log.Error(err.Error())
+		}
+		embed.send("You Won!", fmt.Sprintf("You won your %s game against <@%s>", info.Name, opponentID), playerChannel.ID)
+		embed.setColor(Red)
+		embed.send("You Lost!", fmt.Sprintf("You lost your %s game against <@%s>", info.Name, playerID), opponentChannel.ID)
+		return
+
+	case "opwin":
+		embed.setColor(Red)
+		err = Session.ChannelMessageDelete(playerChannel.ID, currentGameID)
+		if err != nil {
+			Log.Error(err.Error())
+		}
+		embed.send("You Won!", fmt.Sprintf("You won your %s game against %s", info.Name, playerID), opponent.Username)
+		embed.setColor(Red)
+		embed.send("You Lost!", fmt.Sprintf("You lost your %s game against %s", info.Name, opponentID), player.Username)
+		return
+
+	case "err":
 	}
 }
 
@@ -296,6 +277,7 @@ func formatBoard(board [][]string) string {
 			emoji, err := Session.State.Emoji("806048328973549578", e)
 			if err != nil {
 				Log.Error(err.Error())
+				return ""
 			}
 			LineString += emoji.MessageFormat()
 		}

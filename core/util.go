@@ -19,3 +19,15 @@ func Contains(arrayType interface{}, item interface{}) bool {
 
 	return false
 }
+
+//IntArray
+//Returns an array that starts at one value and end at another
+func IntArray(x, y int) []int {
+	var a []int
+	z := x
+	for z <= y {
+		a = append(a, z)
+		z++
+	}
+	return a
+}
