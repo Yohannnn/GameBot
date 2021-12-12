@@ -35,8 +35,8 @@ func fillerUpdate(input bot.GameInput) (bot.GameUpdate, string) {
 	return bot.GameUpdate{}, ""
 }
 
-func fillerStart() bot.GameUpdate {
-	return bot.GameUpdate{}
+func fillerStart() bot.GameStart {
+	return bot.GameStart{}
 }
 
 func init() {

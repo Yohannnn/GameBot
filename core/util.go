@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/bwmarrin/discordgo"
 	"reflect"
+	"regexp"
 )
 
 //Colors
@@ -43,7 +44,7 @@ func (e *embed) send(title string, description string, channelID string) *discor
 	e.Description = description
 	m, err := Session.ChannelMessageSendEmbed(channelID, e.MessageEmbed)
 	if err != nil {
-		Log.Error(err.Error())
+		log.Error(err.Error())
 	}
 	return m
 }
@@ -113,4 +114,17 @@ func IntArray(x, y int) []int {
 		z++
 	}
 	return a
+}
+
+// EnsureNumbers
+// Given a string, ensure it contains only numbers
+// This is useful for stripping letters and formatting characters from user/role pings
+func EnsureNumbers(in string) string {
+	reg, err := regexp.Compile("[^0-9]+")
+	if err != nil {
+		log.Errorf("An unrecoverable error occurred when compiling a regex expression: %s", err)
+		return ""
+	}
+
+	return reg.ReplaceAllString(in, "")
 }

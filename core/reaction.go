@@ -1,7 +1,9 @@
 package core
 
 import (
+	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"strings"
 )
 
 //NumCord
@@ -76,7 +78,7 @@ func addOption(option Option, channelID string, messageID string) {
 	if option.Rollback {
 		err := Session.MessageReactionAdd(channelID, messageID, "❌")
 		if err != nil {
-			Log.Error(err.Error())
+			log.Error(err.Error())
 			return
 		}
 	}
@@ -84,14 +86,14 @@ func addOption(option Option, channelID string, messageID string) {
 	for _, e := range option.Reactions {
 		err := Session.MessageReactionAdd(channelID, messageID, e)
 		if err != nil {
-			Log.Error(err.Error())
+			log.Error(err.Error())
 			return
 		}
 	}
 
 	err := Session.MessageReactionAdd(channelID, messageID, "✅")
 	if err != nil {
-		Log.Error(err.Error())
+		log.Error(err.Error())
 		return
 	}
 }
@@ -108,24 +110,12 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	//Gets the message that the reaction was put on
 	m, err := s.ChannelMessage(r.ChannelID, r.MessageID)
 	if err != nil {
-		Log.Error(err.Error())
+		log.Error(err.Error())
 	}
 
 	//Ignore messages that are not sent by the bot
 	if m.Author.ID != s.State.User.ID {
 		return
-	}
-
-	//Checks if the emoji is the confirmation emoji
-	if r.Emoji.Name != "✅" {
-		return
-	}
-
-	//Checks the message is a game invite
-	if m.Embeds[0].Title[7:] == "Invite!" {
-		//game := Games[strings.Split(m.Embeds[0].Title, " ")[0]]
-		//startUpdate := game.StartFunc
-		//sendGameUpdate(game.Info, startUpdate(), m.Embeds[0].Description)
 	}
 
 	//Checks if the reaction was an option given by the bot
@@ -134,6 +124,43 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 			break
 		} else if i == len(m.Reactions) {
 			return
+		}
+	}
+
+	//Checks if the emoji is the confirmation or rollback
+	if r.Emoji.Name != "✅" && r.Emoji.Name != "❌" {
+		return
+	}
+
+	//Checks if the message is a game invite
+	if m.Embeds[0].Title[7:] == "Invite!" && r.Emoji.Name == "✅" {
+		invitee := strings.Split(m.Embeds[0].Description, " ")[2]
+		if invitee == "anyone" || invitee == r.UserID {
+			game := Games[strings.Split(m.Embeds[0].Title, " ")[0]]
+			OpID := strings.Split(m.Embeds[0].Description, " ")[0]
+			startGame(game.StartFunc, *game.Info, r.UserID, OpID)
+		}
+		return
+	}
+
+	//Detects if it is rollback or confirmation
+	if r.Emoji.Name == "✅"{
+		var reactions []string
+		//Gets the options that the player selected
+		for _, e := range m.Reactions {
+			if e.Me && e.Emoji.Name != "✅"{
+				reactions = append(reactions, fmt.Sprintf("%s:%s", e.Emoji.Name, e.Emoji.ID))
+			}
+		}
+
+		//Gets the option name
+		optionName := m.Embeds[0].Fields[len(m.Embeds[0].Fields)-1].Value
+
+		//Gets the board
+		for m.Embeds[0].Fields[0]{
+			
+		}
+
 		}
 	}
 }

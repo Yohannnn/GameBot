@@ -7,8 +7,5 @@ import (
 
 func main() {
 	// Start bot
-	err := bot.Start()
-	if err != nil {
-		bot.Log.Error(err.Error())
-	}
+	bot.Start()
 }
