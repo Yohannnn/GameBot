@@ -4,55 +4,9 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-//NumCord
-//A map of ints to their emoji (except 0 cause its sus)
-var NumCord = map[int]string{
-	1:  "1️⃣",
-	2:  "2️⃣",
-	3:  "3️⃣",
-	4:  "4️⃣",
-	5:  "5️⃣",
-	6:  "6️⃣",
-	7:  "7️⃣",
-	8:  "8️⃣",
-	9:  "9️⃣",
-	10: "🔟",
-}
-
-//LetCord
-//A map of a letters place in the alphabet to its emoji
-var LetCord = map[int]string{
-	1:  "🇦",
-	2:  "🇧",
-	3:  "🇨",
-	4:  "🇩",
-	5:  "🇪",
-	6:  "🇫",
-	7:  "🇬",
-	8:  "🇭",
-	9:  "🇮",
-	10: "🇯",
-	11: "🇰",
-	12: "🇱",
-	13: "🇲",
-	14: "🇳",
-	15: "🇴",
-	16: "🇵",
-	17: "🇶",
-	18: "🇷",
-	19: "🇸",
-	20: "🇹",
-	21: "🇺",
-	23: "🇻",
-	24: "🇼",
-	25: "🇽",
-	26: "🇾",
-	27: "🇿",
-}
-
-//Option
+//Input
 //An input for a game update
-type Option struct {
+type Input struct {
 	Name      string
 	Message   string
 	Rollback  bool
@@ -61,8 +15,8 @@ type Option struct {
 
 //CreateOption
 //Creates an option
-func CreateOption(name string, message string, rollback bool, reactions []string) Option {
-	return Option{
+func CreateOption(name string, message string, rollback bool, reactions []string) Input {
+	return Input{
 		Name:      name,
 		Message:   message,
 		Rollback:  rollback,
@@ -71,8 +25,8 @@ func CreateOption(name string, message string, rollback bool, reactions []string
 }
 
 //addOption
-//Adds A Reaction Option to a message
-func addOption(option Option, channelID string, messageID string) {
+//Adds A Reaction Input to a message
+func addOption(option Input, channelID string, messageID string) {
 	if option.Rollback {
 		err := Session.MessageReactionAdd(channelID, messageID, "❌")
 		if err != nil {
