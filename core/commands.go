@@ -29,6 +29,9 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	//Switch case for handling commands
 	switch command {
 	case "test":
+		embed := newEmbed()
+		embed.setFooter("899872740180369408:899526815238996018", "", "")
+		embed.send("test", "test", m.ChannelID)
 	case "playgame":
 		//Pares args for gameInfo
 		game := Games[args[0]]
@@ -38,27 +41,27 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		embed.setColor(Green)
 
 		//Sets invite channel and description
-		if len(args) > 2 {
-			newMessage = embed.send(m.ChannelID, fmt.Sprintf("%s invite!", game.Name), fmt.Sprintf(
-				"%s invited you to play %s! React with ✅ to accept.",
-				m.Author.Mention(), game.Name))
+		if len(args) >= 2 {
+			newMessage = embed.send(fmt.Sprintf("%s invite!", game.Name), fmt.Sprintf(
+				"%s invited %s to play %s! React with ✅ to accept.",
+				m.Author.Mention(), args[1], game.Name), m.ChannelID)
 		} else {
-			newMessage = embed.send(m.ChannelID, fmt.Sprintf("%s Invite!", game.Name),
+			newMessage = embed.send(fmt.Sprintf("%s Invite!", game.Name),
 				fmt.Sprintf("%s invited anyone to play %s! React with ✅ to accept.",
-					m.Author.Mention(), game.Name))
+					m.Author.Mention(), game.Name), m.ChannelID)
 		}
 
 		//Adds confirmation emoji
 		err := s.MessageReactionAdd(m.ChannelID, newMessage.ID, "✅")
 		if err != nil {
-			Log.Error(err.Error())
+			log.Error(err.Error())
 			return
 		}
 
 		//Deletes the command message
 		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
 		if err != nil {
-			Log.Error(err.Error())
+			log.Error(err.Error())
 		}
 
 	case "gameinfo":
@@ -80,7 +83,7 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 func handleCommandError(gID string, cId string, uId string) {
 	if r := recover(); r != nil {
-		Log.Errorf("Message from %s in %s in %s caused: %s", uId, cId, gID, r)
+		log.Errorf("Message from %s in %s in %s caused: %s", uId, cId, gID, r)
 	}
 	return
 }

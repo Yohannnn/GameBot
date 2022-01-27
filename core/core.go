@@ -13,21 +13,21 @@ import (
 //The session of the bot
 var Session *discordgo.Session
 
-//Log
+//log
 //The logger for the bot
-var Log = tlog.NewTaggedLogger("BotCore", tlog.NewColor("38;5;111"))
+var log = tlog.NewTaggedLogger("BotCore", tlog.NewColor("38;5;111"))
 
-func Start() error {
+func Start() {
 	//Load token
 	err := godotenv.Load("./.env")
 	if err != nil {
-		Log.Error(err.Error())
+		log.Error(err.Error())
 	}
 
 	//Create a new Discord session
 	Session, err = discordgo.New("Bot " + os.Getenv("Token"))
 	if err != nil {
-		return err
+		log.Error(err.Error())
 	}
 
 	//Add Handlers
@@ -37,15 +37,14 @@ func Start() error {
 	//Star discord session
 	err = Session.Open()
 	if err != nil {
-		return err
+		log.Error(err.Error())
 	}
 
-	Log.Info("Bot is now running.  Press CTRL-C to exit.")
+	log.Info("Bot is now running.  Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
 	//Close session when finished
 	err = Session.Close()
-	return err
 }
