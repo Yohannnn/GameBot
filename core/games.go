@@ -13,34 +13,38 @@ type Game struct {
 	Rules        string
 	Color        int
 	ExampleBoard [][]string
-	StartFunc    func() (*GameInstance, GameUpdate)
-	UpdateFunc   func(*GameInstance) GameUpdate
+	StartFunc    func() (*Instance, GameUpdate)
+	UpdateFunc   func(*Instance) GameUpdate
 }
 
-//GameInstance
+//Instance
 //An instance of a game
-type GameInstance struct {
+type Instance struct {
 	ID               string
 	Game             Game
-	OneBoard         [][]string
-	TwoBoard         [][]string
+	Board            [][]string
 	Stats            map[string]string
 	Options          []string
-	OneTurn          bool
+	Turn             bool
 	CurrentMessageID string
-	OneName          string
-	TwoName          string
-	OneChannelID     string
-	TwoChannelID     string
+	CurrentInput     Input
+	Players          []Player
+}
+
+//Player
+//The player of a game
+type Player struct {
+	ID        string
+	Name      string
+	ChannelID string
 }
 
 //GameUpdate
 //An update to a game
 type GameUpdate struct {
-	Type     string
-	OneBoard [][]string
-	TwoBoard [][]string
-	Input    Input
+	Type  string
+	Board [][]string
+	Input Input
 }
 
 //Games
@@ -49,11 +53,11 @@ var Games = make(map[string]Game)
 
 //Instances
 //Map of IDs to their game instance
-var Instances = make(map[string]*GameInstance)
+var Instances = make(map[string]*Instance)
 
 //AddGame
 //Adds a game to the game map
-func AddGame(Name string, Description string, Rules string, Color int, ExampleBoard [][]string, StartFunc func() (*GameInstance, GameUpdate), UpdateFunc func(*GameInstance) GameUpdate) {
+func AddGame(Name string, Description string, Rules string, Color int, ExampleBoard [][]string, StartFunc func() (*Instance, GameUpdate), UpdateFunc func(*Instance) GameUpdate) {
 	game := Game{
 		Name:         Name,
 		Description:  Description,
@@ -68,7 +72,7 @@ func AddGame(Name string, Description string, Rules string, Color int, ExampleBo
 
 //CreateGameUpdate
 //Creates a game update to be sent to a player
-func CreateGameUpdate(Type string, POneBoard [][]string, PTwoBoard [][]string, Input Input) GameUpdate {
+func CreateGameUpdate(Type string, Board [][]string, Input Input) GameUpdate {
 	//Checks type
 	if !Contains([]string{"local", "global", "error", "playerwin", "opponentwin"}, Type) {
 		Log.Error("Invalid type for game update")
@@ -76,10 +80,9 @@ func CreateGameUpdate(Type string, POneBoard [][]string, PTwoBoard [][]string, I
 	}
 
 	gU := GameUpdate{
-		Type:     Type,
-		OneBoard: POneBoard,
-		TwoBoard: PTwoBoard,
-		Input:    Input,
+		Type:  Type,
+		Board: Board,
+		Input: Input,
 	}
 
 	return gU
@@ -87,80 +90,55 @@ func CreateGameUpdate(Type string, POneBoard [][]string, PTwoBoard [][]string, I
 
 //gameUpdate
 //Sends the game update
-func gameUpdate(instance *GameInstance, update GameUpdate) {
-	var PEmbed *embed
-	var OpEmbed *embed
+func gameUpdate(instance *Instance, update GameUpdate) {
+	var Current Player
+	var Opponent Player
+
+	if instance.Turn {
+		Current = instance.Players[0]
+		Opponent = instance.Players[1]
+	} else {
+		Current = instance.Players[1]
+		Opponent = instance.Players[0]
+	}
 
 	//Creates a new embed
-	playerEmbed := newEmbed()
+	Embed := newEmbed()
 
-	//Formats the player game board
-	PBoard := formatBoard(update.PBoard)
-	PEmbed.addField("Board", PBoard, true)
-
-	if update.Type != "local" && update.Type != "global" {
-		//Creates a new embed
-		OpEmbed = newEmbed()
-
-		//Formats the board
-		OpBoard := formatBoard(update.OpBoard)
-		OpEmbed.addField("Board", OpBoard, true)
-	}
+	//Formats the player game board and sets color
+	Board := formatBoard(update.Board)
+	Embed.addField("Board", Board, true)
+	Embed.setColor(instance.Game.Color)
 
 	//Checks the type of update
 	switch update.Type {
 
 	case "local":
 		//Adds option field and gameID
-		playerEmbed.addField(update.Input.Message, update.Input.Name, false)
-		playerEmbed.setFooter(instance.ID, "", "")
+		Embed.addField(update.Input.Message, update.Input.Name, false)
+		Embed.setFooter(instance.ID, "", "")
 
 		//Sends the new message and deletes the old one
-		newMessage := playerEmbed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, instance.PName), instance.PChannelID)
-		err := Session.ChannelMessageDelete(instance.PChannelID, instance.CurrentMessageID)
+		newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
+		err := Session.ChannelMessageDelete(Current.ChannelID, instance.CurrentMessageID)
 		if err != nil {
 			Log.Error(err.Error())
 			return
 		}
 
 		//Adds the reactions to the message
-		addOption(update.Input, instance.PChannelID, newMessage.ID)
+		addInput(update.Input, Current.ChannelID, newMessage.ID)
 
 	case "global":
-		playerEmbed.setColor(instance.Game.Color)
-		OpEmbed.setColor(instance.Game.Color)
-
 		//Sends the new message
-		newMessage := playerEmbed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, instance.PName), instance.OpChannelID)
+		newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
 
 		//Adds input field and gameID
-		playerEmbed.addField(update.Input.Message, update.Input.Name, false)
-		playerEmbed.setFooter(instance.CurrentMessageID, "", "")
+		Embed.addField(update.Input.Message, update.Input.Name, false)
+		Embed.setFooter(instance.CurrentMessageID, "", "")
 
 		//Adds the reactions to the message
-		addOption(update.Input, instance.OpChannelID, newMessage.ID)
-
-	case "playerwin":
-		playerEmbed.setColor(Yellow)
-		err := Session.ChannelMessageDelete(instance.PChannelID, instance.CurrentMessageID)
-		if err != nil {
-			Log.Error(err.Error())
-		}
-		playerEmbed.send("You Won!", fmt.Sprintf("You won your %s game against <@%s>", instance.Game.Name, opponentID), instance.PChannelID)
-		playerEmbed.setColor(Red)
-		playerEmbed.send("You Lost!", fmt.Sprintf("You lost your %s game against <@%s>", instance.Game.Name, playerID), instance.OpChannelID)
-
-	case "opwin":
-		playerEmbed.setColor(Red)
-		err = Session.ChannelMessageDelete(instance.PChannelID, currentGameID)
-		if err != nil {
-			Log.Error(err.Error())
-		}
-		playerEmbed.send("You Won!", fmt.Sprintf("You won your %s game against %s", info.Name, playerID), opponent.Username)
-		playerEmbed.setColor(Red)
-		playerEmbed.send("You Lost!", fmt.Sprintf("You lost your %s game against %s", info.Name, opponentID), player.Username)
-
-	case "err":
+		addInput(update.Input, Opponent.ChannelID, newMessage.ID)
 	}
 }
 

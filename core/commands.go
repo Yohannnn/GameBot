@@ -31,7 +31,7 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	case "test":
 	case "playgame":
 		//Pares args for gameInfo
-		game := Games[args[0]].Info
+		game := Games[args[0]]
 
 		//Formats embed message
 		embed := newEmbed()
@@ -70,12 +70,12 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			embed.send(m.ChannelID, "Error!", "The requested game does not exist.")
 		}
 		//Parses args for gameInfo
-		gameInfo := Games[args[0]].Info
+		game := Games[args[0]]
 		//Formats and sends embed message
-		embed.addField("Rules", gameInfo.Rules, true)
-		embed.addField("Board", formatBoard(gameInfo.ExampleBoard), true)
-		embed.setColor(gameInfo.Color)
-		embed.send(m.ChannelID, gameInfo.Name, gameInfo.Description)
+		embed.addField("Rules", game.Rules, true)
+		embed.addField("Board", formatBoard(game.ExampleBoard), true)
+		embed.setColor(game.Color)
+		embed.send(m.ChannelID, game.Name, game.Description)
 	}
 }
 func handleCommandError(gID string, cId string, uId string) {

@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"strings"
 )
 
 //Input
@@ -13,9 +14,9 @@ type Input struct {
 	Reactions []string
 }
 
-//CreateOption
+//CreateInput
 //Creates an option
-func CreateOption(name string, message string, rollback bool, reactions []string) Input {
+func CreateInput(name string, message string, rollback bool, reactions []string) Input {
 	return Input{
 		Name:      name,
 		Message:   message,
@@ -24,9 +25,9 @@ func CreateOption(name string, message string, rollback bool, reactions []string
 	}
 }
 
-//addOption
-//Adds A Reaction Input to a message
-func addOption(option Input, channelID string, messageID string) {
+//addInput
+//Adds an Input to a message
+func addInput(option Input, channelID string, messageID string) {
 	if option.Rollback {
 		err := Session.MessageReactionAdd(channelID, messageID, "❌")
 		if err != nil {
@@ -77,9 +78,9 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 
 	//Checks the message is a game invite
 	if m.Embeds[0].Title[7:] == "Invite!" {
-		//game := Games[strings.Split(m.Embeds[0].Title, " ")[0]]
-		//startUpdate := game.StartFunc
-		//sendGameUpdate(game.Info, startUpdate(), m.Embeds[0].Description)
+		game := Games[strings.Split(m.Embeds[0].Title, " ")[0]]
+		startUpdate := game.StartFunc
+		gameUpdate(game.Info, startUpdate(), m.Embeds[0].Description)
 	}
 
 	//Checks if the reaction was an option given by the bot
