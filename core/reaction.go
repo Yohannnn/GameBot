@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 	"strings"
 )
 
@@ -78,20 +79,47 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 
 	//Checks the message is a game invite
 	if m.Embeds[0].Title[7:] == "Invite!" {
+		//Gets the game
 		game := Games[strings.Split(m.Embeds[0].Title, " ")[0]]
-		//Creates a new instance and adds it to the instance map
-		Instances
-		update := game.StartFunc()
 
-		startGame(game)
-	}
-
-	//Checks if the reaction was an option given by the bot
-	for i, e := range m.Reactions {
-		if e.Emoji.ID == r.Emoji.ID && e.Me {
-			break
-		} else if i == len(m.Reactions) {
+		//Get the user struct and dm channel for each player
+		Current, err := Session.User(r.UserID)
+		if err != nil {
+			log.Error(err.Error())
 			return
 		}
+		CurrentChan, err := Session.UserChannelCreate(Current.ID)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		Opponent := m.Mentions[0]
+		OpponentChan, err := Session.UserChannelCreate(Current.ID)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		//Creates and defines a new instance
+		instance := Instance{
+			ID:    uuid.NewString(),
+			Game:  game,
+			Board: nil,
+			Stats: nil,
+			Players: []Player{
+				{
+					ID:        Current.ID,
+					Name:      Current.Username,
+					ChannelID: CurrentChan.ID,
+				}, {
+					ID:        Opponent.ID,
+					Name:      Opponent.Username,
+					ChannelID: OpponentChan.ID,
+				}},
+		}
+
+		//Starts a new game
+		game.StartFunc(&instance)
+		return
 	}
 }

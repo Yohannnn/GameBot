@@ -77,8 +77,8 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		//Formats and sends embed message
 		embed.addField("Rules", game.Rules, true)
 		embed.addField("Board", formatBoard(game.ExampleBoard), true)
-		embed.setColor(game.Color)
-		embed.send(m.ChannelID, game.Name, game.Description)
+		embed.setColor(Blue)
+		embed.send(game.Name, game.Description, m.ChannelID)
 	}
 }
 func handleCommandError(gID string, cId string, uId string) {

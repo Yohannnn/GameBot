@@ -12,10 +12,9 @@ type Game struct {
 	Name         string
 	Description  string
 	Rules        string
-	Color        int
 	ExampleBoard [][]string
-	StartFunc    func(*Instance) GameUpdate
-	UpdateFunc   func(*Instance) GameUpdate
+	StartFunc    func(*Instance)
+	UpdateFunc   func(*Instance)
 }
 
 //Instance
@@ -25,9 +24,7 @@ type Instance struct {
 	Game             Game
 	Board            [][]string
 	Stats            map[string]string
-	Turn             int
 	CurrentMessageID string
-	CurrentInput     Input
 	Players          []Player
 }
 
@@ -37,15 +34,6 @@ type Player struct {
 	ID        string
 	Name      string
 	ChannelID string
-}
-
-//GameUpdate
-//An update to a game
-type GameUpdate struct {
-	Current  Player
-	Opponent Player
-	Board    [][]string
-	Input    Input
 }
 
 //Games
@@ -58,12 +46,11 @@ var Instances = make(map[string]*Instance)
 
 //AddGame
 //Adds a game to the game map
-func AddGame(Name string, Description string, Rules string, Color int, ExampleBoard [][]string, StartFunc func(*Instance) GameUpdate, UpdateFunc func(*Instance) GameUpdate) {
+func AddGame(Name string, Description string, Rules string, ExampleBoard [][]string, StartFunc func(*Instance), UpdateFunc func(*Instance)) {
 	game := Game{
 		Name:         Name,
 		Description:  Description,
 		Rules:        Rules,
-		Color:        Color,
 		ExampleBoard: ExampleBoard,
 		StartFunc:    StartFunc,
 		UpdateFunc:   UpdateFunc,
@@ -71,112 +58,50 @@ func AddGame(Name string, Description string, Rules string, Color int, ExampleBo
 	Games[strings.ToLower(Name)] = game
 }
 
-//CreateGameUpdate
-//Creates a game update to be sent to a player
-func CreateGameUpdate(Player Player, Board [][]string, Input Input) GameUpdate {
-	gU := GameUpdate{
-		Board: Board,
-		Input: Input,
-	}
-	return gU
-}
-
-//CreateInstance
-//Creates an instance
-func CreateInstance(ID string, Game Game, Board [][]string, stats map[string]string, Turn int, CurrentMessageID string, CurrentInput Input, Players []Player) *Instance {
-	newInstance := Instance{
-		ID:               ID,
-		Game:             Game,
-		Board:            Board,
-		Stats:            stats,
-		Turn:             Turn,
-		CurrentMessageID: CurrentMessageID,
-		CurrentInput:     CurrentInput,
-		Players:          Players,
-	}
-	Instances[ID] = &newInstance
-	return &newInstance
-}
-
-//gameUpdate
-//Sends the game update
-func gameUpdate(instance *Instance, update GameUpdate) {
+//UpdateGame
+//Sends an update of a game instance
+func UpdateGame(instance *Instance, Board [][]string, Input Input, Current Player, Opponent Player) {
 	//Creates a new embed
 	Embed := newEmbed()
 
 	//Formats the player game board and sets color
-	Embed.addField("Board", formatBoard(update.Board), true)
-	Embed.setColor(instance.Game.Color)
+	Embed.addField("Board", formatBoard(Board), true)
+	Embed.setColor(Blue)
 
 	//Sends the new messages and deletes old one
-	err := Session.ChannelMessageDelete(update.Current.ChannelID, instance.CurrentMessageID)
+	err := Session.ChannelMessageDelete(Current.ChannelID, instance.CurrentMessageID)
 	if err != nil {
 		log.Error(err.Error())
 		return
 	}
 
-	Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, update.Opponent.Name), update.Current.ChannelID)
-	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, update.Current.Name), update.Opponent.ChannelID)
+	Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
+	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
 
 	//Adds input field and gameID
-	Embed.addField(update.Input.Message, update.Input.Name, false)
+	Embed.addField(Input.Message, Input.Name, false)
 	Embed.setFooter(instance.ID, "", "")
 
 	//Adds the reactions to the message
-	addInput(update.Input, update.Opponent.ChannelID, newMessage.ID)
+	addInput(Input, Opponent.ChannelID, newMessage.ID)
 }
 
-//startGame
-//starts am instance of a game
-func startGame(game Game, update GameUpdate, Current Player, Opponent Player) *Instance {
-	//Creates a new embed and instance ID
+//StartGame
+//Starts an instance of a game
+func StartGame(game Game, Current Player, Opponent Player, Board [][]string, Input Input) {
 	Embed := newEmbed()
-	ID := uuid.NewString()
-	update := game.StartFunc()
+	instance := Instance{ID: uuid.NewString(), Players: []Player{Current, Opponent}}
+	Instances[instance.ID] = &instance
 
 	//Formats and sends the message
-	Embed.addField("Board", formatBoard(update.Board), true)
-	Embed.setColor(game.Color)
-	Embed.setFooter(ID, "", "")
-	newMessage := Embed.send(game.Name, fmt.Sprintf("%s game against %s", game.Name, update.Current.Name), update.Opponent.ChannelID)
+	Embed.addField("Board", formatBoard(Board), true)
+	Embed.setColor(Blue)
+	Embed.setFooter(instance.ID, "", "")
+	newMessage := Embed.send(game.Name, fmt.Sprintf("%s game against %s", game.Name, Opponent.Name), Current.ChannelID)
 
 	//Adds input field and gameID
-	Embed.addField(update.Input.Message, update.Input.Name, false)
+	Embed.addField(Input.Message, Input.Name, false)
 
 	//Adds the options to the message
-	addInput(update.Input, update.Opponent.ChannelID, newMessage.ID)
-
-	//Sets the instance ID
-
-	//Creates and returns an instance
-	return instance{
-		ID:               ID,
-		Game:             game,
-		Board:            nil,
-		Stats:            nil,
-		Turn:             0,
-		CurrentMessageID: newMessage.ID,
-		CurrentInput:     update.Input,
-		Players:          nil,
-	}
-}
-
-//formatBoard
-//Formats a game board into a string
-func formatBoard(board [][]string) string {
-	var BoardString string
-	var LineString string
-	for _, l := range board {
-		for _, e := range l {
-			emoji, err := Session.State.Emoji("806048328973549578", e)
-			if err != nil {
-				log.Error(err.Error())
-				return ""
-			}
-			LineString += emoji.MessageFormat()
-		}
-		BoardString += LineString + "\n"
-		LineString = ""
-	}
-	return BoardString
+	addInput(Input, Opponent.ChannelID, newMessage.ID)
 }

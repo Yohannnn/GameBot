@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/bwmarrin/discordgo"
 	"reflect"
+	"strings"
 )
 
 //Colors
@@ -16,6 +17,64 @@ const (
 	Purple = 11177686
 	White  = 15132648
 )
+
+//Squares
+const (
+	RedSqr    = "🟥"
+	BrownSqr  = "🟫"
+	OrangeSqr = "🟧"
+	YellowSqr = "🟨"
+	GreenSqr  = "🟩"
+	BlueSqr   = "🟦"
+	PurpleSqr = "🟪"
+	WhiteSqr  = "⬜"
+)
+
+//NumCord
+//A map of numbers to their emoji (except 0 cause its sus)
+var NumCord = map[int]string{
+	1:  "1️⃣",
+	2:  "2️⃣",
+	3:  "3️⃣",
+	4:  "4️⃣",
+	5:  "5️⃣",
+	6:  "6️⃣",
+	7:  "7️⃣",
+	8:  "8️⃣",
+	9:  "9️⃣",
+	10: "🔟",
+}
+
+//LetCord
+//A map of a letters place in the alphabet to its emoji
+var LetCord = map[int]string{
+	1:  "🇦",
+	2:  "🇧",
+	3:  "🇨",
+	4:  "🇩",
+	5:  "🇪",
+	6:  "🇫",
+	7:  "🇬",
+	8:  "🇭",
+	9:  "🇮",
+	10: "🇯",
+	11: "🇰",
+	12: "🇱",
+	13: "🇲",
+	14: "🇳",
+	15: "🇴",
+	16: "🇵",
+	17: "🇶",
+	18: "🇷",
+	19: "🇸",
+	20: "🇹",
+	21: "🇺",
+	23: "🇻",
+	24: "🇼",
+	25: "🇽",
+	26: "🇾",
+	27: "🇿",
+}
 
 //embed
 //Struct for response
@@ -115,48 +174,27 @@ func IntArray(x, y int) []int {
 	return a
 }
 
-//NumCord
-//A map of numbers to their emoji (except 0 cause its sus)
-var NumCord = map[int]string{
-	1:  "1️⃣",
-	2:  "2️⃣",
-	3:  "3️⃣",
-	4:  "4️⃣",
-	5:  "5️⃣",
-	6:  "6️⃣",
-	7:  "7️⃣",
-	8:  "8️⃣",
-	9:  "9️⃣",
-	10: "🔟",
-}
+//formatBoard
+//Formats a game board into a string
+func formatBoard(board [][]string) string {
+	var BoardString string
+	var LineString string
 
-//LetCord
-//A map of a letters place in the alphabet to its emoji
-var LetCord = map[int]string{
-	1:  "🇦",
-	2:  "🇧",
-	3:  "🇨",
-	4:  "🇩",
-	5:  "🇪",
-	6:  "🇫",
-	7:  "🇬",
-	8:  "🇭",
-	9:  "🇮",
-	10: "🇯",
-	11: "🇰",
-	12: "🇱",
-	13: "🇲",
-	14: "🇳",
-	15: "🇴",
-	16: "🇵",
-	17: "🇶",
-	18: "🇷",
-	19: "🇸",
-	20: "🇹",
-	21: "🇺",
-	23: "🇻",
-	24: "🇼",
-	25: "🇽",
-	26: "🇾",
-	27: "🇿",
+	for _, l := range board {
+		for _, e := range l {
+			if strings.Contains(e, ":") {
+				emoji, err := Session.State.Emoji("806048328973549578", e)
+				if err != nil {
+					log.Error(err.Error())
+					return ""
+				}
+				LineString += emoji.MessageFormat()
+			} else {
+				LineString += e
+			}
+		}
+		BoardString += LineString + "\n"
+		LineString = ""
+	}
+	return BoardString
 }
