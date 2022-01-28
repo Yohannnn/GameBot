@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"strings"
 )
 
@@ -13,7 +14,7 @@ type Game struct {
 	Rules        string
 	Color        int
 	ExampleBoard [][]string
-	StartFunc    func() (*Instance, GameUpdate)
+	StartFunc    func(*Instance) GameUpdate
 	UpdateFunc   func(*Instance) GameUpdate
 }
 
@@ -24,8 +25,7 @@ type Instance struct {
 	Game             Game
 	Board            [][]string
 	Stats            map[string]string
-	Options          []string
-	Turn             bool
+	Turn             int
 	CurrentMessageID string
 	CurrentInput     Input
 	Players          []Player
@@ -42,9 +42,10 @@ type Player struct {
 //GameUpdate
 //An update to a game
 type GameUpdate struct {
-	Type  string
-	Board [][]string
-	Input Input
+	Current  Player
+	Opponent Player
+	Board    [][]string
+	Input    Input
 }
 
 //Games
@@ -57,7 +58,7 @@ var Instances = make(map[string]*Instance)
 
 //AddGame
 //Adds a game to the game map
-func AddGame(Name string, Description string, Rules string, Color int, ExampleBoard [][]string, StartFunc func() (*Instance, GameUpdate), UpdateFunc func(*Instance) GameUpdate) {
+func AddGame(Name string, Description string, Rules string, Color int, ExampleBoard [][]string, StartFunc func(*Instance) GameUpdate, UpdateFunc func(*Instance) GameUpdate) {
 	game := Game{
 		Name:         Name,
 		Description:  Description,
@@ -72,73 +73,91 @@ func AddGame(Name string, Description string, Rules string, Color int, ExampleBo
 
 //CreateGameUpdate
 //Creates a game update to be sent to a player
-func CreateGameUpdate(Type string, Board [][]string, Input Input) GameUpdate {
-	//Checks type
-	if !Contains([]string{"local", "global", "error", "playerwin", "opponentwin"}, Type) {
-		Log.Error("Invalid type for game update")
-		return GameUpdate{}
-	}
-
+func CreateGameUpdate(Player Player, Board [][]string, Input Input) GameUpdate {
 	gU := GameUpdate{
-		Type:  Type,
 		Board: Board,
 		Input: Input,
 	}
-
 	return gU
+}
+
+//CreateInstance
+//Creates an instance
+func CreateInstance(ID string, Game Game, Board [][]string, stats map[string]string, Turn int, CurrentMessageID string, CurrentInput Input, Players []Player) *Instance {
+	newInstance := Instance{
+		ID:               ID,
+		Game:             Game,
+		Board:            Board,
+		Stats:            stats,
+		Turn:             Turn,
+		CurrentMessageID: CurrentMessageID,
+		CurrentInput:     CurrentInput,
+		Players:          Players,
+	}
+	Instances[ID] = &newInstance
+	return &newInstance
 }
 
 //gameUpdate
 //Sends the game update
 func gameUpdate(instance *Instance, update GameUpdate) {
-	var Current Player
-	var Opponent Player
-
-	if instance.Turn {
-		Current = instance.Players[0]
-		Opponent = instance.Players[1]
-	} else {
-		Current = instance.Players[1]
-		Opponent = instance.Players[0]
-	}
-
 	//Creates a new embed
 	Embed := newEmbed()
 
 	//Formats the player game board and sets color
-	Board := formatBoard(update.Board)
-	Embed.addField("Board", Board, true)
+	Embed.addField("Board", formatBoard(update.Board), true)
 	Embed.setColor(instance.Game.Color)
 
-	//Checks the type of update
-	switch update.Type {
+	//Sends the new messages and deletes old one
+	err := Session.ChannelMessageDelete(update.Current.ChannelID, instance.CurrentMessageID)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
 
-	case "local":
-		//Adds option field and gameID
-		Embed.addField(update.Input.Message, update.Input.Name, false)
-		Embed.setFooter(instance.ID, "", "")
+	Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, update.Opponent.Name), update.Current.ChannelID)
+	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, update.Current.Name), update.Opponent.ChannelID)
 
-		//Sends the new message and deletes the old one
-		newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
-		err := Session.ChannelMessageDelete(Current.ChannelID, instance.CurrentMessageID)
-		if err != nil {
-			Log.Error(err.Error())
-			return
-		}
+	//Adds input field and gameID
+	Embed.addField(update.Input.Message, update.Input.Name, false)
+	Embed.setFooter(instance.ID, "", "")
 
-		//Adds the reactions to the message
-		addInput(update.Input, Current.ChannelID, newMessage.ID)
+	//Adds the reactions to the message
+	addInput(update.Input, update.Opponent.ChannelID, newMessage.ID)
+}
 
-	case "global":
-		//Sends the new message
-		newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
+//startGame
+//starts am instance of a game
+func startGame(game Game, update GameUpdate, Current Player, Opponent Player) *Instance {
+	//Creates a new embed and instance ID
+	Embed := newEmbed()
+	ID := uuid.NewString()
+	update := game.StartFunc()
 
-		//Adds input field and gameID
-		Embed.addField(update.Input.Message, update.Input.Name, false)
-		Embed.setFooter(instance.CurrentMessageID, "", "")
+	//Formats and sends the message
+	Embed.addField("Board", formatBoard(update.Board), true)
+	Embed.setColor(game.Color)
+	Embed.setFooter(ID, "", "")
+	newMessage := Embed.send(game.Name, fmt.Sprintf("%s game against %s", game.Name, update.Current.Name), update.Opponent.ChannelID)
 
-		//Adds the reactions to the message
-		addInput(update.Input, Opponent.ChannelID, newMessage.ID)
+	//Adds input field and gameID
+	Embed.addField(update.Input.Message, update.Input.Name, false)
+
+	//Adds the options to the message
+	addInput(update.Input, update.Opponent.ChannelID, newMessage.ID)
+
+	//Sets the instance ID
+
+	//Creates and returns an instance
+	return instance{
+		ID:               ID,
+		Game:             game,
+		Board:            nil,
+		Stats:            nil,
+		Turn:             0,
+		CurrentMessageID: newMessage.ID,
+		CurrentInput:     update.Input,
+		Players:          nil,
 	}
 }
 
@@ -151,7 +170,7 @@ func formatBoard(board [][]string) string {
 		for _, e := range l {
 			emoji, err := Session.State.Emoji("806048328973549578", e)
 			if err != nil {
-				Log.Error(err.Error())
+				log.Error(err.Error())
 				return ""
 			}
 			LineString += emoji.MessageFormat()

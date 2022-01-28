@@ -43,7 +43,7 @@ func (e *embed) send(title string, description string, channelID string) *discor
 	e.Description = description
 	m, err := Session.ChannelMessageSendEmbed(channelID, e.MessageEmbed)
 	if err != nil {
-		Log.Error(err.Error())
+		log.Error(err.Error())
 	}
 	return m
 }

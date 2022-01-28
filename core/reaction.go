@@ -31,7 +31,7 @@ func addInput(option Input, channelID string, messageID string) {
 	if option.Rollback {
 		err := Session.MessageReactionAdd(channelID, messageID, "❌")
 		if err != nil {
-			Log.Error(err.Error())
+			log.Error(err.Error())
 			return
 		}
 	}
@@ -39,14 +39,14 @@ func addInput(option Input, channelID string, messageID string) {
 	for _, e := range option.Reactions {
 		err := Session.MessageReactionAdd(channelID, messageID, e)
 		if err != nil {
-			Log.Error(err.Error())
+			log.Error(err.Error())
 			return
 		}
 	}
 
 	err := Session.MessageReactionAdd(channelID, messageID, "✅")
 	if err != nil {
-		Log.Error(err.Error())
+		log.Error(err.Error())
 		return
 	}
 }
@@ -63,7 +63,7 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	//Gets the message that the reaction was put on
 	m, err := s.ChannelMessage(r.ChannelID, r.MessageID)
 	if err != nil {
-		Log.Error(err.Error())
+		log.Error(err.Error())
 	}
 
 	//Ignore messages that are not sent by the bot
@@ -79,8 +79,11 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	//Checks the message is a game invite
 	if m.Embeds[0].Title[7:] == "Invite!" {
 		game := Games[strings.Split(m.Embeds[0].Title, " ")[0]]
-		startUpdate := game.StartFunc
-		gameUpdate(game.Info, startUpdate(), m.Embeds[0].Description)
+		//Creates a new instance and adds it to the instance map
+		Instances
+		update := game.StartFunc()
+
+		startGame(game)
 	}
 
 	//Checks if the reaction was an option given by the bot
