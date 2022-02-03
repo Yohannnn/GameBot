@@ -14,7 +14,7 @@ type Game struct {
 	Rules        string
 	ExampleBoard [][]string
 	StartFunc    func(*Instance)
-	UpdateFunc   func(*Instance)
+	UpdateFunc   func(*Instance, Output)
 }
 
 //Instance
@@ -24,7 +24,7 @@ type Instance struct {
 	Game             Game
 	Board            [][]string
 	CurrentInput     Input
-	Stats            map[string]string
+	Stats            map[string][]string
 	CurrentMessageID string
 	Players          []Player
 }
@@ -47,7 +47,7 @@ var Instances = make(map[string]*Instance)
 
 //AddGame
 //Adds a game to the game map
-func AddGame(Name string, Description string, Rules string, ExampleBoard [][]string, StartFunc func(*Instance), UpdateFunc func(*Instance)) {
+func AddGame(Name string, Description string, Rules string, ExampleBoard [][]string, StartFunc func(*Instance), UpdateFunc func(*Instance, Output)) {
 	game := Game{
 		Name:         Name,
 		Description:  Description,
@@ -105,4 +105,24 @@ func StartGame(game Game, Current Player, Opponent Player, Board [][]string, Inp
 
 	//Adds the options to the message
 	addInput(Input, Opponent.ChannelID, newMessage.ID)
+}
+
+//EndGame
+//Ends a game with a winner and loser
+func EndGame(instance *Instance, Winner Player, Looser Player, Board [][]string) {
+	Embed := newEmbed()
+
+	//Formats the embed
+	Embed.addField("Board", formatBoard(Board), true)
+
+	//Sets color and sends to winner
+	Embed.setColor(Yellow)
+	Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Looser.Name), Winner.ChannelID)
+
+	//Sets color and sends to looser
+	Embed.setColor(Red)
+	Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Winner.Name), Looser.ChannelID)
+
+	//Removes instance from instances
+	delete(Instances, instance.ID)
 }

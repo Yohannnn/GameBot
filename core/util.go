@@ -1,8 +1,10 @@
 package core
 
 import (
+	"errors"
 	"github.com/bwmarrin/discordgo"
 	"reflect"
+	"regexp"
 	"strings"
 )
 
@@ -27,7 +29,6 @@ const (
 	GreenSqr  = "🟩"
 	BlueSqr   = "🟦"
 	PurpleSqr = "🟪"
-	WhiteSqr  = "⬜"
 )
 
 //NumCord
@@ -149,10 +150,6 @@ func (e *embed) setColor(clr int) {
 func Contains(arrayType interface{}, item interface{}) bool {
 	arr := reflect.ValueOf(arrayType)
 
-	if arr.Kind() != reflect.Array {
-		panic("Invalid data-type")
-	}
-
 	for i := 0; i < arr.Len(); i++ {
 		if arr.Index(i).Interface() == item {
 			return true
@@ -188,7 +185,7 @@ func formatBoard(board [][]string) string {
 					log.Error(err.Error())
 					return ""
 				}
-				LineString += emoji.MessageFormat()
+				LineString = emoji.MessageFormat() + " "
 			} else {
 				LineString += e
 			}
@@ -197,4 +194,55 @@ func formatBoard(board [][]string) string {
 		LineString = ""
 	}
 	return BoardString
+}
+
+// RemoveItems
+// Remove items from a slice by value
+func RemoveItems(slice []string, deleteables []string) []string {
+	var newSlice []string
+	for _, elem := range slice {
+		if !Contains(deleteables, elem) {
+			newSlice = append(newSlice, elem)
+		}
+	}
+	return newSlice
+}
+
+// EnsureNumbers
+// Given a string, ensure it contains only numbers
+// This is useful for stripping letters and formatting characters from user/role pings
+func EnsureNumbers(in string) string {
+	reg, err := regexp.Compile("[^0-9]+")
+	if err != nil {
+		log.Errorf("An unrecoverable error occurred when compiling a regex expression: %s", err)
+		return ""
+	}
+
+	return reg.ReplaceAllString(in, "")
+}
+
+// CleanId
+// Given a string, attempt to remove all numbers from it
+// Additionally, ensure it is at least 17 characters in length
+// This is a way of "cleaning" a Discord ping into a valid snowflake string
+func CleanId(in string) string {
+	out := EnsureNumbers(in)
+
+	// Discord IDs must be, at minimum, 17 characters long
+	if len(out) < 17 {
+		return ""
+	}
+
+	return out
+}
+
+// GetUser
+// Given a user ID, get that user's object (global to Discord, not in a guild)
+func GetUser(userId string) (*discordgo.User, error) {
+	cleanedId := CleanId(userId)
+	if cleanedId == "" {
+		return nil, errors.New("provided ID is invalid")
+	}
+
+	return Session.User(cleanedId)
 }

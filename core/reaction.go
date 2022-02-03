@@ -9,25 +9,32 @@ import (
 //Input
 //An input for a game update
 type Input struct {
-	Name      string
-	Message   string
-	Reactions []string
+	Name    string
+	Message string
+	Options []string
+}
+
+//Output
+//The output of a games input (the things that were selected and by whom)
+type Output struct {
+	Name       string
+	SelOptions []string
 }
 
 //CreateInput
 //Creates an option
-func CreateInput(name string, message string, rollback bool, reactions []string) Input {
+func CreateInput(name string, message string, options []string) Input {
 	return Input{
-		Name:      name,
-		Message:   message,
-		Reactions: reactions,
+		Name:    name,
+		Message: message,
+		Options: options,
 	}
 }
 
 //addInput
 //Adds an Input to a message
 func addInput(option Input, channelID string, messageID string) {
-	for _, e := range option.Reactions {
+	for _, e := range option.Options {
 		err := Session.MessageReactionAdd(channelID, messageID, e)
 		if err != nil {
 			log.Error(err.Error())
@@ -45,6 +52,8 @@ func addInput(option Input, channelID string, messageID string) {
 //reactionHandler
 //Handles reactions for messages the bot has sent
 func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+	var output Output
+	var game Game
 
 	//Ignores reactions added by the bot
 	if r.UserID == s.State.User.ID {
@@ -70,7 +79,7 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	//Checks the message is a game invite
 	if m.Embeds[0].Title[7:] == "Invite!" {
 		//Gets the game
-		game := Games[strings.Split(m.Embeds[0].Title, " ")[0]]
+		game = Games[strings.ToLower(strings.Split(m.Embeds[0].Title, " ")[0])]
 
 		//Get the user struct and dm channel for each player
 		Current, err := Session.User(r.UserID)
@@ -83,7 +92,7 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 			log.Error(err.Error())
 			return
 		}
-		Opponent := m.Mentions[0]
+		Opponent, err := GetUser(m.Embeds[0].Description[:21])
 		OpponentChan, err := Session.UserChannelCreate(Current.ID)
 		if err != nil {
 			log.Error(err.Error())
@@ -95,7 +104,7 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 			ID:    uuid.NewString(),
 			Game:  game,
 			Board: nil,
-			Stats: nil,
+			Stats: make(map[string][]string),
 			Players: []Player{
 				{
 					ID:        Current.ID,
@@ -112,4 +121,14 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		game.StartFunc(&instance)
 		return
 	}
+	instance := Instances[m.Embeds[0].Footer.Text]
+	output.Name = instance.CurrentInput.Name
+
+	//Gets all valid reactions to the message
+	for _, r := range m.Reactions {
+		if Contains(instance.CurrentInput.Options, r.Emoji.ID) {
+			output.SelOptions = append(output.SelOptions, r.Emoji.ID)
+		}
+	}
+	game.UpdateFunc(instance, output)
 }
