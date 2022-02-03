@@ -34,7 +34,7 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		embed.send("test", "test", m.ChannelID)
 	case "playgame":
 		//Pares args for gameInfo
-		game := Games[args[0]]
+		game := Games[strings.ToLower(args[0])]
 
 		//Formats embed message
 		embed := newEmbed()
@@ -58,12 +58,6 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-		//Deletes the command message
-		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
-		if err != nil {
-			log.Error(err.Error())
-		}
-
 	case "gameinfo":
 		//Creates a new embed
 		embed := newEmbed()
@@ -80,7 +74,14 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		embed.setColor(Blue)
 		embed.send(game.Name, game.Description, m.ChannelID)
 	}
+
+	//Deletes the command message
+	err := s.ChannelMessageDelete(m.ChannelID, m.ID)
+	if err != nil {
+		log.Error(err.Error())
+	}
 }
+
 func handleCommandError(gID string, cId string, uId string) {
 	if r := recover(); r != nil {
 		log.Errorf("Message from %s in %s in %s caused: %s", uId, cId, gID, r)

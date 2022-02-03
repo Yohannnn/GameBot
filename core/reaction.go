@@ -119,8 +119,15 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 
 		//Starts a new game
 		game.StartFunc(&instance)
+
+		//Deletes invite
+		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
+		if err != nil {
+			log.Error(err.Error())
+		}
 		return
 	}
+
 	instance := Instances[m.Embeds[0].Footer.Text]
 	output.Name = instance.CurrentInput.Name
 
