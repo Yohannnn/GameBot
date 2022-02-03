@@ -11,7 +11,6 @@ import (
 type Input struct {
 	Name      string
 	Message   string
-	Rollback  bool
 	Reactions []string
 }
 
@@ -21,7 +20,6 @@ func CreateInput(name string, message string, rollback bool, reactions []string)
 	return Input{
 		Name:      name,
 		Message:   message,
-		Rollback:  rollback,
 		Reactions: reactions,
 	}
 }
@@ -29,14 +27,6 @@ func CreateInput(name string, message string, rollback bool, reactions []string)
 //addInput
 //Adds an Input to a message
 func addInput(option Input, channelID string, messageID string) {
-	if option.Rollback {
-		err := Session.MessageReactionAdd(channelID, messageID, "❌")
-		if err != nil {
-			log.Error(err.Error())
-			return
-		}
-	}
-
 	for _, e := range option.Reactions {
 		err := Session.MessageReactionAdd(channelID, messageID, e)
 		if err != nil {

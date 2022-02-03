@@ -27,6 +27,8 @@ func fillerStart(instance *bot.Instance) {
 	instance.Board[7][0] = "Player0"
 	instance.Board[0][7] = "Player1"
 
+	bot.StartGame()
+
 }
 
 func fillerUpdate(instance *bot.Instance) {

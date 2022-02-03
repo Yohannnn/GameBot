@@ -23,6 +23,7 @@ type Instance struct {
 	ID               string
 	Game             Game
 	Board            [][]string
+	CurrentInput     Input
 	Stats            map[string]string
 	CurrentMessageID string
 	Players          []Player

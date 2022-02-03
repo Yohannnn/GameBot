@@ -34,7 +34,7 @@ func Start() {
 	Session.AddHandler(commandHandler)
 	Session.AddHandler(reactionHandler)
 
-	//Star discord session
+	//Start discord session
 	err = Session.Open()
 	if err != nil {
 		log.Error(err.Error())
