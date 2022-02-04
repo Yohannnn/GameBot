@@ -29,6 +29,8 @@ const (
 	GreenSqr  = "🟩"
 	BlueSqr   = "🟦"
 	PurpleSqr = "🟪"
+	WhiteSqr  = "⬜"
+	BlackSqr  = "⬛"
 )
 
 //NumCord
@@ -185,9 +187,9 @@ func formatBoard(board [][]string) string {
 					log.Error(err.Error())
 					return ""
 				}
-				LineString = emoji.MessageFormat() + " "
+				LineString += emoji.MessageFormat() + "‌"
 			} else {
-				LineString += e
+				LineString += e + "‌"
 			}
 		}
 		BoardString += LineString + "\n"
@@ -196,8 +198,8 @@ func formatBoard(board [][]string) string {
 	return BoardString
 }
 
-// RemoveItems
-// Remove items from a slice by value
+//RemoveItems
+//Remove items from a slice by value
 func RemoveItems(slice []string, deleteables []string) []string {
 	var newSlice []string
 	for _, elem := range slice {
@@ -208,9 +210,9 @@ func RemoveItems(slice []string, deleteables []string) []string {
 	return newSlice
 }
 
-// EnsureNumbers
-// Given a string, ensure it contains only numbers
-// This is useful for stripping letters and formatting characters from user/role pings
+//EnsureNumbers
+//Given a string, ensure it contains only numbers
+//This is useful for stripping letters and formatting characters from user/role pings
 func EnsureNumbers(in string) string {
 	reg, err := regexp.Compile("[^0-9]+")
 	if err != nil {
@@ -221,10 +223,10 @@ func EnsureNumbers(in string) string {
 	return reg.ReplaceAllString(in, "")
 }
 
-// CleanId
-// Given a string, attempt to remove all numbers from it
-// Additionally, ensure it is at least 17 characters in length
-// This is a way of "cleaning" a Discord ping into a valid snowflake string
+//CleanId
+//Given a string, attempt to remove all numbers from it
+//Additionally, ensure it is at least 17 characters in length
+//This is a way of "cleaning" a Discord ping into a valid snowflake string
 func CleanId(in string) string {
 	out := EnsureNumbers(in)
 
@@ -236,8 +238,8 @@ func CleanId(in string) string {
 	return out
 }
 
-// GetUser
-// Given a user ID, get that user's object (global to Discord, not in a guild)
+//GetUser
+//Given a user ID, get that user's object (global to Discord, not in a guild)
 func GetUser(userId string) (*discordgo.User, error) {
 	cleanedId := CleanId(userId)
 	if cleanedId == "" {

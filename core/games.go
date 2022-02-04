@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"strings"
 )
 
@@ -27,6 +26,7 @@ type Instance struct {
 	Stats            map[string][]string
 	CurrentMessageID string
 	Players          []Player
+	Turn             int
 }
 
 //Player
@@ -61,20 +61,20 @@ func AddGame(Name string, Description string, Rules string, ExampleBoard [][]str
 
 //UpdateGame
 //Sends an update of a game instance
-func UpdateGame(instance *Instance, Board [][]string, Input Input, Current Player, Opponent Player) {
+func UpdateGame(instance *Instance, Board [][]string, Input Input) {
+	var Current Player
+	var Opponent Player
+
+	Current = instance.Players[instance.Turn]
+	Opponent = instance.Players[-instance.Turn-1]
+
 	//Creates a new embed
 	Embed := newEmbed()
 
 	//Formats the player game board and sets color
 	Embed.addField("Board", formatBoard(Board), true)
+	Embed.addField("Input", Input.Message, true)
 	Embed.setColor(Blue)
-
-	//Sends the new messages and deletes old one
-	err := Session.ChannelMessageDelete(Current.ChannelID, instance.CurrentMessageID)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
 
 	Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
 	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
@@ -89,16 +89,21 @@ func UpdateGame(instance *Instance, Board [][]string, Input Input, Current Playe
 
 //StartGame
 //Starts an instance of a game
-func StartGame(game Game, Current Player, Opponent Player, Board [][]string, Input Input) {
+func StartGame(instance *Instance, Board [][]string, Input Input) {
+	var Current Player
+	var Opponent Player
+
 	Embed := newEmbed()
-	instance := Instance{ID: uuid.NewString(), Players: []Player{Current, Opponent}}
-	Instances[instance.ID] = &instance
+
+	Current = instance.Players[instance.Turn]
+	Opponent = instance.Players[-instance.Turn-1]
 
 	//Formats and sends the message
 	Embed.addField("Board", formatBoard(Board), true)
+	Embed.addField("Input", Input.Message, true)
 	Embed.setColor(Blue)
 	Embed.setFooter(instance.ID, "", "")
-	newMessage := Embed.send(game.Name, fmt.Sprintf("%s game against %s", game.Name, Opponent.Name), Current.ChannelID)
+	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
 
 	//Adds input field and gameID
 	Embed.addField(Input.Message, Input.Name, false)
@@ -125,4 +130,32 @@ func EndGame(instance *Instance, Winner Player, Looser Player, Board [][]string)
 
 	//Removes instance from instances
 	delete(Instances, instance.ID)
+}
+
+//EditGame
+//Edits a current games message instead of sending a new one
+func EditGame(instance *Instance, Board [][]string, Input Input, Current Player, Opponent Player) {
+	//Creates a new embed
+	Embed := newEmbed()
+
+	//Formats the player game board and sets color
+	Embed.addField("Board", formatBoard(Board), true)
+	Embed.setColor(Blue)
+
+	//Sends the new messages and deletes old one
+	err := Session.ChannelMessageDelete(Current.ChannelID, instance.CurrentMessageID)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
+	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
+
+	//Adds input field and gameID
+	Embed.addField(Input.Message, Input.Name, false)
+	Embed.setFooter(instance.ID, "", "")
+
+	//Adds the reactions to the message
+	addInput(Input, Opponent.ChannelID, newMessage.ID)
 }

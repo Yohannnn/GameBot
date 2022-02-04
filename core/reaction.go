@@ -78,6 +78,16 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 
 	//Checks the message is a game invite
 	if m.Embeds[0].Title[7:] == "Invite!" {
+		//Checks if the reaction is from the opponent
+		Opponent, err := GetUser(m.Embeds[0].Description[:21])
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		if r.UserID == Opponent.ID {
+			return
+		}
+
 		//Gets the game
 		game = Games[strings.ToLower(strings.Split(m.Embeds[0].Title, " ")[0])]
 
@@ -87,12 +97,14 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 			log.Error(err.Error())
 			return
 		}
+
 		CurrentChan, err := Session.UserChannelCreate(Current.ID)
 		if err != nil {
 			log.Error(err.Error())
 			return
+
 		}
-		Opponent, err := GetUser(m.Embeds[0].Description[:21])
+
 		OpponentChan, err := Session.UserChannelCreate(Current.ID)
 		if err != nil {
 			log.Error(err.Error())
@@ -103,7 +115,6 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		instance := Instance{
 			ID:    uuid.NewString(),
 			Game:  game,
-			Board: nil,
 			Stats: make(map[string][]string),
 			Players: []Player{
 				{
@@ -116,6 +127,7 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 					ChannelID: OpponentChan.ID,
 				}},
 		}
+		Instances[instance.ID] = &instance
 
 		//Starts a new game
 		game.StartFunc(&instance)

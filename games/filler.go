@@ -19,15 +19,27 @@ var BoardKey = map[string]string{
 func fillerStart(instance *bot.Instance) {
 	var reactions []string
 
-	for i := 0; i < 8; i++ {
+	//Generates a game board
+	for l := 0; l < 8; l++ {
 		var line []string
-		//var PlayerColor string
-		lastColor := ""
 		for i := 0; i < 8; i++ {
-			color := colors[rand.Intn(7)]
-			if color == lastColor {
-				return
+			possibleColors := colors
+
+			//Removes adjacent colors
+			if l > 0 {
+				possibleColors = bot.RemoveItems(possibleColors, []string{instance.Board[l-1][i]})
 			}
+			if i > 0 {
+				possibleColors = bot.RemoveItems(possibleColors, []string{line[i-1]})
+			}
+
+			//Removes player1 color if its player0 color select
+			if l == 7 && i == 0 {
+				possibleColors = bot.RemoveItems(possibleColors, []string{instance.Board[0][7]})
+			}
+
+			//Picks a random color
+			color := possibleColors[rand.Intn(len(possibleColors))]
 			line = append(line, color)
 		}
 		instance.Board = append(instance.Board, line)
@@ -58,7 +70,7 @@ func fillerStart(instance *bot.Instance) {
 		}
 	}
 
-	bot.StartGame(bot.Games["filler"], instance.Players[0], instance.Players[1], board, input)
+	bot.StartGame(instance, board, input)
 }
 
 func fillerUpdate(instance *bot.Instance, output bot.Output) {
