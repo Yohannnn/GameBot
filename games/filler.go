@@ -57,23 +57,47 @@ func fillerStart(instance *bot.Instance) {
 
 	input := bot.CreateInput("Color", "Select a color to switch to", reactions)
 
-	board := instance.Board
+	instance.DisplayBoard = instance.Board
 	for l, line := range instance.Board {
 		for i, c := range line {
 			if c == "Player0" {
-				board[l][i] = BoardKey[instance.Stats["PlayerColors"][0]]
+				instance.DisplayBoard[l][i] = BoardKey[instance.Stats["PlayerColors"][0]]
 			} else if c == "Player1" {
-				board[l][i] = BoardKey[instance.Stats["PlayerColors"][1]]
+				instance.DisplayBoard[l][i] = BoardKey[instance.Stats["PlayerColors"][1]]
 			} else {
-				board[l][i] = BoardKey[c]
+				instance.DisplayBoard[l][i] = BoardKey[c]
 			}
 		}
 	}
 
-	bot.StartGame(instance, board, input)
+	bot.StartGame(instance, instance.DisplayBoard, input)
 }
 
 func fillerUpdate(instance *bot.Instance, output bot.Output) {
+	//Errors
+	if len(output.SelOptions) > 1 {
+		bot.EditGame(instance, instance.DisplayBoard, bot.CreateInput("Color", "You can only select 1 color", instance.CurrentInput.Options))
+		return
+	}
+
+	//Checks for win
+	for i, l := range instance.Board {
+		var Count int
+		for _, c := range l {
+			if c == "Player0" {
+				Count++
+			} else if c != "Player1" {
+				break
+			}
+		}
+		if i == 7 {
+			if Count > 64 {
+				bot.EndGame(instance, instance.Players[0], instance.Players[1], instance.DisplayBoard)
+			} else if Count < 64 {
+				bot.EndGame(instance, instance.Players[1], instance.Players[0], instance.DisplayBoard)
+			}
+		}
+	}
 }
 
 func init() {

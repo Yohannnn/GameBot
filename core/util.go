@@ -248,3 +248,19 @@ func GetUser(userId string) (*discordgo.User, error) {
 
 	return Session.User(cleanedId)
 }
+
+//MakeCordOption
+//Takes 2 integers (max value for each cord) and returns an array of corresponding emojis
+func MakeCordOption(Xmax int, Ymax int) []string {
+	var Options []string
+
+	for i := 1; i <= Xmax; i++ {
+		Options = append(Options, NumCord[i])
+	}
+
+	for i := 1; i <= Ymax; i++ {
+		Options = append(Options, LetCord[i])
+	}
+
+	return Options
+}

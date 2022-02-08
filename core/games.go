@@ -22,6 +22,7 @@ type Instance struct {
 	ID               string
 	Game             Game
 	Board            [][]string
+	DisplayBoard     [][]string
 	CurrentInput     Input
 	Stats            map[string][]string
 	CurrentMessageID string
@@ -62,11 +63,8 @@ func AddGame(Name string, Description string, Rules string, ExampleBoard [][]str
 //UpdateGame
 //Sends an update of a game instance
 func UpdateGame(instance *Instance, Board [][]string, Input Input) {
-	var Current Player
-	var Opponent Player
-
-	Current = instance.Players[instance.Turn]
-	Opponent = instance.Players[-instance.Turn-1]
+	Current := instance.Players[instance.Turn]
+	Opponent := instance.Players[-instance.Turn-1]
 
 	//Creates a new embed
 	Embed := newEmbed()
@@ -85,6 +83,9 @@ func UpdateGame(instance *Instance, Board [][]string, Input Input) {
 
 	//Adds the reactions to the message
 	addInput(Input, Opponent.ChannelID, newMessage.ID)
+
+	//Changes the turn
+	instance.Turn = -instance.Turn - 1
 }
 
 //StartGame
@@ -134,7 +135,11 @@ func EndGame(instance *Instance, Winner Player, Looser Player, Board [][]string)
 
 //EditGame
 //Edits a current games message instead of sending a new one
-func EditGame(instance *Instance, Board [][]string, Input Input, Current Player, Opponent Player) {
+func EditGame(instance *Instance, Board [][]string, Input Input) {
+	//Gets players
+	Current := instance.Players[instance.Turn]
+	Opponent := instance.Players[-instance.Turn-1]
+
 	//Creates a new embed
 	Embed := newEmbed()
 
@@ -142,15 +147,15 @@ func EditGame(instance *Instance, Board [][]string, Input Input, Current Player,
 	Embed.addField("Board", formatBoard(Board), true)
 	Embed.setColor(Blue)
 
-	//Sends the new messages and deletes old one
+	//Deletes the old message
 	err := Session.ChannelMessageDelete(Current.ChannelID, instance.CurrentMessageID)
 	if err != nil {
 		log.Error(err.Error())
 		return
 	}
 
-	Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
-	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
+	//Sends the new message
+	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
 
 	//Adds input field and gameID
 	Embed.addField(Input.Message, Input.Name, false)
