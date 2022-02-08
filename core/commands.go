@@ -58,6 +58,12 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
+		//Deletes the command message
+		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
+		if err != nil {
+			log.Error(err.Error())
+		}
+
 	case "gameinfo":
 		//Creates a new embed
 		embed := newEmbed()
@@ -73,12 +79,12 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		embed.addField("Board", formatBoard(game.ExampleBoard), true)
 		embed.setColor(Blue)
 		embed.send(game.Name, game.Description, m.ChannelID)
-	}
 
-	//Deletes the command message
-	err := s.ChannelMessageDelete(m.ChannelID, m.ID)
-	if err != nil {
-		log.Error(err.Error())
+		//Deletes the command message
+		err := s.ChannelMessageDelete(m.ChannelID, m.ID)
+		if err != nil {
+			log.Error(err.Error())
+		}
 	}
 }
 

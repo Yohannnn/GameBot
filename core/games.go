@@ -62,7 +62,7 @@ func AddGame(Name string, Description string, Rules string, ExampleBoard [][]str
 
 //UpdateGame
 //Sends an update of a game instance
-func UpdateGame(instance *Instance, Board [][]string, Input Input) {
+func UpdateGame(instance *Instance, Input Input) {
 	Current := instance.Players[instance.Turn]
 	Opponent := instance.Players[-instance.Turn-1]
 
@@ -70,7 +70,7 @@ func UpdateGame(instance *Instance, Board [][]string, Input Input) {
 	Embed := newEmbed()
 
 	//Formats the player game board and sets color
-	Embed.addField("Board", formatBoard(Board), true)
+	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
 	Embed.addField("Input", Input.Message, true)
 	Embed.setColor(Blue)
 
@@ -90,7 +90,7 @@ func UpdateGame(instance *Instance, Board [][]string, Input Input) {
 
 //StartGame
 //Starts an instance of a game
-func StartGame(instance *Instance, Board [][]string, Input Input) {
+func StartGame(instance *Instance, Input Input) {
 	var Current Player
 	var Opponent Player
 
@@ -100,7 +100,7 @@ func StartGame(instance *Instance, Board [][]string, Input Input) {
 	Opponent = instance.Players[-instance.Turn-1]
 
 	//Formats and sends the message
-	Embed.addField("Board", formatBoard(Board), true)
+	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
 	Embed.addField("Input", Input.Message, true)
 	Embed.setColor(Blue)
 	Embed.setFooter(instance.ID, "", "")
@@ -115,11 +115,11 @@ func StartGame(instance *Instance, Board [][]string, Input Input) {
 
 //EndGame
 //Ends a game with a winner and loser
-func EndGame(instance *Instance, Winner Player, Looser Player, Board [][]string) {
+func EndGame(instance *Instance, Winner Player, Looser Player) {
 	Embed := newEmbed()
 
 	//Formats the embed
-	Embed.addField("Board", formatBoard(Board), true)
+	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
 
 	//Sets color and sends to winner
 	Embed.setColor(Yellow)
@@ -135,7 +135,7 @@ func EndGame(instance *Instance, Winner Player, Looser Player, Board [][]string)
 
 //EditGame
 //Edits a current games message instead of sending a new one
-func EditGame(instance *Instance, Board [][]string, Input Input) {
+func EditGame(instance *Instance, Input Input) {
 	//Gets players
 	Current := instance.Players[instance.Turn]
 	Opponent := instance.Players[-instance.Turn-1]
@@ -144,7 +144,7 @@ func EditGame(instance *Instance, Board [][]string, Input Input) {
 	Embed := newEmbed()
 
 	//Formats the player game board and sets color
-	Embed.addField("Board", formatBoard(Board), true)
+	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
 	Embed.setColor(Blue)
 
 	//Deletes the old message

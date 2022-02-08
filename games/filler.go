@@ -47,9 +47,10 @@ func fillerStart(instance *bot.Instance) {
 
 	instance.Stats["PlayerColors"] = []string{instance.Board[7][0], instance.Board[0][7]}
 	instance.Stats["DisallowedColors"] = []string{instance.Stats["PlayerColors"][0], instance.Stats["PlayerColors"][1]}
+	instance.Stats["LastColors"] = []string{"", ""}
 
-	instance.Board[7][0] = "Player0"
-	instance.Board[0][7] = "Player1"
+	instance.Board[7][0] = "0"
+	instance.Board[0][7] = "1"
 
 	for _, c := range bot.RemoveItems(colors, instance.Stats["DisallowedColors"]) {
 		reactions = append(reactions, BoardKey[c])
@@ -60,9 +61,9 @@ func fillerStart(instance *bot.Instance) {
 	instance.DisplayBoard = instance.Board
 	for l, line := range instance.Board {
 		for i, c := range line {
-			if c == "Player0" {
+			if c == "0" {
 				instance.DisplayBoard[l][i] = BoardKey[instance.Stats["PlayerColors"][0]]
-			} else if c == "Player1" {
+			} else if c == "1" {
 				instance.DisplayBoard[l][i] = BoardKey[instance.Stats["PlayerColors"][1]]
 			} else {
 				instance.DisplayBoard[l][i] = BoardKey[c]
@@ -70,34 +71,122 @@ func fillerStart(instance *bot.Instance) {
 		}
 	}
 
-	bot.StartGame(instance, instance.DisplayBoard, input)
+	bot.StartGame(instance, input)
 }
 
 func fillerUpdate(instance *bot.Instance, output bot.Output) {
+	var searchVal string
+	var color string
+	var reactions []string
+
 	//Errors
 	if len(output.SelOptions) > 1 {
-		bot.EditGame(instance, instance.DisplayBoard, bot.CreateInput("Color", "You can only select 1 color", instance.CurrentInput.Options))
+		bot.EditGame(instance, bot.CreateInput("Color", "You can only select 1 color", instance.CurrentInput.Options))
 		return
+	}
+
+	//Gets color value of output
+	switch output.SelOptions[0] {
+	case "🟥":
+		color = "Red"
+	case "🟫":
+		color = "Brown"
+	case "🟧":
+		color = "Orange"
+	case "🟨":
+		color = "Yellow"
+	case "🟩":
+		color = "Green"
+	case "🟦":
+		color = "Blue"
+	case "🟪":
+		color = "Purple"
+	}
+
+	//Gets player value to search for
+	if instance.Turn == 0 {
+		searchVal = "0"
+	} else if instance.Turn == 1 {
+		searchVal = "1"
+	}
+
+	//Converts adjacent colors to player colors
+	for l, line := range instance.Board {
+		for i, c := range line {
+			if c == searchVal {
+				//Checks horiz colors
+				if i > 0 {
+					if line[i-1] == color {
+						line[i-1] = searchVal
+					}
+				}
+				if i < 7 {
+					if line[i+1] == color {
+						line[i+1] = searchVal
+					}
+				}
+				//Checks vert colors
+				if l > 0 {
+					if line[l-1] == color {
+						line[l-1] = searchVal
+					}
+				}
+				if l < 7 {
+					if line[l+1] == color {
+						line[l+1] = searchVal
+					}
+				}
+			}
+		}
+	}
+
+	//Renders new display board
+	for l, line := range instance.Board {
+		for i, c := range line {
+			if c == "0" {
+				instance.DisplayBoard[l][i] = BoardKey[instance.Stats["PlayerColors"][0]]
+			} else if c == "1" {
+				instance.DisplayBoard[l][i] = BoardKey[instance.Stats["PlayerColors"][1]]
+			} else {
+				instance.DisplayBoard[l][i] = BoardKey[c]
+			}
+		}
 	}
 
 	//Checks for win
 	for i, l := range instance.Board {
 		var Count int
 		for _, c := range l {
-			if c == "Player0" {
+			if c == "0" {
 				Count++
-			} else if c != "Player1" {
+			} else if c != "1" {
 				break
 			}
 		}
 		if i == 7 {
 			if Count > 64 {
-				bot.EndGame(instance, instance.Players[0], instance.Players[1], instance.DisplayBoard)
+				bot.EndGame(instance, instance.Players[0], instance.Players[1])
+				return
 			} else if Count < 64 {
-				bot.EndGame(instance, instance.Players[1], instance.Players[0], instance.DisplayBoard)
+				bot.EndGame(instance, instance.Players[1], instance.Players[0])
+				return
 			}
 		}
 	}
+
+	instance.Stats["LastColors"][instance.Turn] = instance.Stats["PlayerColors"][instance.Turn]
+	instance.Stats["PlayerColors"][instance.Turn] = color
+	instance.Stats["DisallowedColors"] = append(instance.Stats["LastColors"], instance.Stats["PlayerColors"][0], instance.Stats["PlayerColors"][1])
+
+	for _, c := range bot.RemoveItems(colors, instance.Stats["DisallowedColors"]) {
+		reactions = append(reactions, BoardKey[c])
+	}
+
+	input := bot.CreateInput("Color", "Select a color to switch to", reactions)
+
+	//Sends update
+	bot.UpdateGame(instance, input)
+
 }
 
 func init() {
