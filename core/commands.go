@@ -28,10 +28,25 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	//Switch case for handling commands
 	switch command {
-	case "test":
+
+	//Gives a list of all games
+	case "games":
+		var names string
+		for _, g := range Games {
+			names += g.Name + ", "
+		}
+
 		embed := newEmbed()
-		embed.setFooter("899872740180369408:899526815238996018", "", "")
-		embed.send("test", "test", m.ChannelID)
+		embed.setColor(Blue)
+		embed.send("Games", fmt.Sprintf("The currently playable games are: %s\"To see more information about a particular game you can run !GameInfo <GameName>\"", names), m.ChannelID)
+
+		//Deletes the command message
+		err := s.ChannelMessageDelete(m.ChannelID, m.ID)
+		if err != nil {
+			log.Error(err.Error())
+		}
+
+	//Creates an invite to a game
 	case "playgame":
 		//Pares args for gameInfo
 		game := Games[strings.ToLower(args[0])]
@@ -64,6 +79,7 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			log.Error(err.Error())
 		}
 
+	//Gives the info for a game
 	case "gameinfo":
 		//Creates a new embed
 		embed := newEmbed()

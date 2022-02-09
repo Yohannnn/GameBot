@@ -6,7 +6,7 @@ import (
 )
 
 var colors = []string{"Red", "Brown", "Orange", "Yellow", "Green", "Blue", "Purple"}
-var BoardKey = map[string]string{
+var boardKey = map[string]string{
 	"Red":    bot.RedSqr,
 	"Brown":  bot.BrownSqr,
 	"Orange": bot.OrangeSqr,
@@ -52,7 +52,7 @@ func fillerStart(instance *bot.Instance) {
 	instance.Board[0][7] = "1"
 
 	for _, c := range bot.RemoveItems(colors, instance.Stats["DisallowedColors"]) {
-		reactions = append(reactions, BoardKey[c])
+		reactions = append(reactions, boardKey[c])
 	}
 
 	input := bot.CreateInput("Color", "Select a color to switch to", reactions)
@@ -71,11 +71,11 @@ func fillerStart(instance *bot.Instance) {
 	for l, line := range instance.Board {
 		for i, c := range line {
 			if c == "0" {
-				instance.DisplayBoard[l][i] = BoardKey[instance.Stats["PlayerColors"][0]]
+				instance.DisplayBoard[l][i] = boardKey[instance.Stats["PlayerColors"][0]]
 			} else if c == "1" {
-				instance.DisplayBoard[l][i] = BoardKey[instance.Stats["PlayerColors"][1]]
+				instance.DisplayBoard[l][i] = boardKey[instance.Stats["PlayerColors"][1]]
 			} else {
-				instance.DisplayBoard[l][i] = BoardKey[c]
+				instance.DisplayBoard[l][i] = boardKey[c]
 			}
 		}
 	}
@@ -157,11 +157,11 @@ func fillerUpdate(instance *bot.Instance, output bot.Output) {
 	for l, line := range instance.Board {
 		for i, c := range line {
 			if c == "0" {
-				instance.DisplayBoard[l][i] = BoardKey[instance.Stats["PlayerColors"][0]]
+				instance.DisplayBoard[l][i] = boardKey[instance.Stats["PlayerColors"][0]]
 			} else if c == "1" {
-				instance.DisplayBoard[l][i] = BoardKey[instance.Stats["PlayerColors"][1]]
+				instance.DisplayBoard[l][i] = boardKey[instance.Stats["PlayerColors"][1]]
 			} else {
-				instance.DisplayBoard[l][i] = BoardKey[c]
+				instance.DisplayBoard[l][i] = boardKey[c]
 			}
 		}
 	}
@@ -189,7 +189,7 @@ out:
 	}
 
 	for _, c := range bot.RemoveItems(colors, instance.Stats["DisallowedColors"]) {
-		reactions = append(reactions, BoardKey[c])
+		reactions = append(reactions, boardKey[c])
 	}
 
 	input := bot.CreateInput("Color", "Select a color to switch to", reactions)

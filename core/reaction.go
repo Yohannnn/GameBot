@@ -70,6 +70,11 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		return
 	}
 
+	//Ignores sent messages
+	if m.Embeds[0].Title == "Sent!" {
+		return
+	}
+
 	//Checks if the emoji is the confirmation emoji
 	if r.Emoji.Name != "✅" {
 		return
@@ -78,6 +83,8 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	//Gets the game
 	game := Games[strings.ToLower(strings.Split(m.Embeds[0].Title, " ")[0])]
 
+	//TODO Handle direct invites
+	//TODO Add check if player has open dms
 	//Checks the message is a game invite
 	if len(strings.Split(m.Embeds[0].Title, " ")) > 1 {
 		//Checks if the reaction is from the opponent

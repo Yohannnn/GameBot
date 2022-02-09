@@ -113,6 +113,25 @@ func (e *embed) send(title string, description string, channelID string) *discor
 	return m
 }
 
+//edit
+//Edits an embed message
+func (e *embed) edit(title string, description string, channelID string, messageID string) *discordgo.Message {
+	if len(title) > 256 {
+		title = title[:256]
+	}
+	e.Title = title
+
+	if len(description) > 256 {
+		description = description[:256]
+	}
+	e.Description = description
+	m, err := Session.ChannelMessageEditEmbed(channelID, messageID, e.MessageEmbed)
+	if err != nil {
+		log.Error(err.Error())
+	}
+	return m
+}
+
 //addField
 //Adds a field to a response object
 func (e *embed) addField(name string, value string, inline bool) {
@@ -162,18 +181,6 @@ func Contains(arrayType interface{}, item interface{}) bool {
 	}
 
 	return false
-}
-
-//IntArray
-//Returns an array that starts at one value and end at another
-func IntArray(x, y int) []int {
-	var a []int
-	z := x
-	for z <= y {
-		a = append(a, z)
-		z++
-	}
-	return a
 }
 
 //formatBoard

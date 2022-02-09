@@ -19,15 +19,15 @@ type Game struct {
 //Instance
 //An instance of a game
 type Instance struct {
-	ID               string              `json:"id"`
-	Game             Game                `json:"game"`
-	Board            [][]string          `json:"board"`
-	DisplayBoard     [][]string          `json:"display_board"`
-	CurrentInput     Input               `json:"current_input"`
-	Stats            map[string][]string `json:"stats"`
-	CurrentMessageID string              `json:"current_message_id"`
-	Players          []Player            `json:"players"`
-	Turn             int                 `json:"turn"`
+	ID               string
+	Game             Game
+	Board            [][]string
+	DisplayBoard     [][]string
+	CurrentInput     Input
+	Stats            map[string][]string
+	CurrentMessageID string
+	Players          []Player
+	Turn             int
 }
 
 //JSONInstance
@@ -51,6 +51,8 @@ type Player struct {
 	Name      string
 	ChannelID string
 }
+
+//TODO create separate player struct that deals that keeps tracks of wins and is stored in a JSON
 
 //Games
 //Map games names to their game struct
@@ -80,8 +82,9 @@ func UpdateGame(instance *Instance, Input Input) {
 	Current := instance.Players[instance.Turn]
 	Opponent := instance.Players[-(instance.Turn - 1)]
 
-	//Creates a new embed
+	//Creates new embeds
 	Embed := newEmbed()
+	SentEmb := newEmbed()
 
 	//Formats and sends message
 	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
@@ -90,12 +93,12 @@ func UpdateGame(instance *Instance, Input Input) {
 	Embed.setFooter(instance.ID, "", "")
 	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
 
-	//Deletes the old message
-	err := Session.ChannelMessageDelete(Current.ChannelID, instance.CurrentMessageID)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
+	//Formats sent embed
+	SentEmb.setColor(Green)
+	SentEmb.setFooter(instance.ID, "", "")
+
+	//Edits old message to sent
+	SentEmb.edit("Sent!", fmt.Sprintf("Sent %s update to %s", instance.Game.Name, Opponent.Name), Current.ChannelID, instance.CurrentMessageID)
 
 	//Adds the reactions to the message
 	addInput(Input, Opponent.ChannelID, newMessage.ID)
@@ -110,7 +113,7 @@ func UpdateGame(instance *Instance, Input Input) {
 	instance.CurrentMessageID = newMessage.ID
 
 	//Save instances to JSON
-	err = saveInstances()
+	err := saveInstances()
 	if err != nil {
 		log.Error(err.Error())
 		return
@@ -162,11 +165,11 @@ func EndGame(instance *Instance, Winner Player, Looser Player) {
 
 	//Sets color and sends to winner
 	Embed.setColor(Yellow)
-	Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Looser.Name), Winner.ChannelID)
+	Embed.send(instance.Game.Name, fmt.Sprintf("You won your %s game against %s", instance.Game.Name, Looser.Name), Winner.ChannelID)
 
 	//Sets color and sends to looser
 	Embed.setColor(Red)
-	Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Winner.Name), Looser.ChannelID)
+	Embed.send(instance.Game.Name, fmt.Sprintf("You lost your %s game against %s", instance.Game.Name, Winner.Name), Looser.ChannelID)
 
 	//Removes instance from instances
 	delete(Instances, instance.ID)
@@ -191,7 +194,11 @@ func EditGame(instance *Instance, Input Input) {
 
 	//Formats the player game board and sets color
 	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
+	Embed.addField("Input", Input.Message, true)
 	Embed.setColor(Blue)
+
+	//Sends the new message
+	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
 
 	//Deletes the old message
 	err := Session.ChannelMessageDelete(Current.ChannelID, instance.CurrentMessageID)
@@ -200,15 +207,12 @@ func EditGame(instance *Instance, Input Input) {
 		return
 	}
 
-	//Sends the new message
-	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
-
 	//Adds input field and gameID
 	Embed.addField(Input.Message, Input.Name, false)
 	Embed.setFooter(instance.ID, "", "")
 
 	//Adds the reactions to the message
-	addInput(Input, Opponent.ChannelID, newMessage.ID)
+	addInput(Input, Current.ChannelID, newMessage.ID)
 
 	//Sets current input
 	instance.CurrentInput = Input
