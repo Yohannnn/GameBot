@@ -77,7 +77,7 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	}
 
 	//Checks the message is a game invite
-	if m.Embeds[0].Title[7:] == "Invite!" {
+	if len(strings.Split(m.Embeds[0].Title, " ")) > 1 {
 		//Checks if the reaction is from the opponent
 		Opponent, err := GetUser(m.Embeds[0].Description[:21])
 		if err != nil {

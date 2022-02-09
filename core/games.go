@@ -19,15 +19,15 @@ type Game struct {
 //Instance
 //An instance of a game
 type Instance struct {
-	ID               string
-	Game             Game
-	Board            [][]string
-	DisplayBoard     [][]string
-	CurrentInput     Input
-	Stats            map[string][]string
-	CurrentMessageID string
-	Players          []Player
-	Turn             int
+	ID               string              `json:"id"`
+	Game             Game                `json:"game"`
+	Board            [][]string          `json:"board"`
+	DisplayBoard     [][]string          `json:"display_board"`
+	CurrentInput     Input               `json:"current_input"`
+	Stats            map[string][]string `json:"stats"`
+	CurrentMessageID string              `json:"current_message_id"`
+	Players          []Player            `json:"players"`
+	Turn             int                 `json:"turn"`
 }
 
 //Player
@@ -64,7 +64,7 @@ func AddGame(Name string, Description string, Rules string, ExampleBoard [][]str
 //Sends an update of a game instance
 func UpdateGame(instance *Instance, Input Input) {
 	Current := instance.Players[instance.Turn]
-	Opponent := instance.Players[-instance.Turn-1]
+	Opponent := instance.Players[-(instance.Turn - 1)]
 
 	//Creates a new embed
 	Embed := newEmbed()
@@ -74,7 +74,6 @@ func UpdateGame(instance *Instance, Input Input) {
 	Embed.addField("Input", Input.Message, true)
 	Embed.setColor(Blue)
 
-	Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
 	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
 
 	//Adds input field and gameID
@@ -86,6 +85,12 @@ func UpdateGame(instance *Instance, Input Input) {
 
 	//Changes the turn
 	instance.Turn = -instance.Turn - 1
+
+	//Sets current input
+	instance.CurrentInput = Input
+
+	//Sets current message ID
+	instance.CurrentMessageID = newMessage.ID
 }
 
 //StartGame
@@ -96,21 +101,27 @@ func StartGame(instance *Instance, Input Input) {
 
 	Embed := newEmbed()
 
-	Current = instance.Players[instance.Turn]
-	Opponent = instance.Players[-instance.Turn-1]
+	Current = instance.Players[0]
+	Opponent = instance.Players[1]
 
 	//Formats and sends the message
 	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
 	Embed.addField("Input", Input.Message, true)
 	Embed.setColor(Blue)
 	Embed.setFooter(instance.ID, "", "")
-	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
+	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
 
 	//Adds input field and gameID
 	Embed.addField(Input.Message, Input.Name, false)
 
 	//Adds the options to the message
 	addInput(Input, Opponent.ChannelID, newMessage.ID)
+
+	//Sets current input
+	instance.CurrentInput = Input
+
+	//Sets current message ID
+	instance.CurrentMessageID = newMessage.ID
 }
 
 //EndGame
@@ -138,7 +149,7 @@ func EndGame(instance *Instance, Winner Player, Looser Player) {
 func EditGame(instance *Instance, Input Input) {
 	//Gets players
 	Current := instance.Players[instance.Turn]
-	Opponent := instance.Players[-instance.Turn-1]
+	Opponent := instance.Players[-(instance.Turn - 1)]
 
 	//Creates a new embed
 	Embed := newEmbed()
@@ -163,4 +174,10 @@ func EditGame(instance *Instance, Input Input) {
 
 	//Adds the reactions to the message
 	addInput(Input, Opponent.ChannelID, newMessage.ID)
+
+	//Sets current input
+	instance.CurrentInput = Input
+
+	//Sets current message ID
+	instance.CurrentMessageID = newMessage.ID
 }

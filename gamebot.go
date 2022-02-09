@@ -11,6 +11,8 @@ func main() {
 	//Seeds rand
 	rand.Seed(time.Now().UTC().UnixNano())
 
+	//Unmarshalls instances JSON
+
 	// Start bot
 	bot.Start()
 }
