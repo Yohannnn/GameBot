@@ -47,7 +47,6 @@ func fillerStart(instance *bot.Instance) {
 
 	instance.Stats["PlayerColors"] = []string{instance.Board[7][0], instance.Board[0][7]}
 	instance.Stats["DisallowedColors"] = []string{instance.Stats["PlayerColors"][0], instance.Stats["PlayerColors"][1]}
-	instance.Stats["LastColors"] = []string{"", ""}
 
 	instance.Board[7][0] = "0"
 	instance.Board[0][7] = "1"
@@ -151,9 +150,8 @@ func fillerUpdate(instance *bot.Instance, output bot.Output) {
 	}
 
 	//Defines new game stats
-	instance.Stats["LastColors"][instance.Turn] = instance.Stats["PlayerColors"][instance.Turn]
 	instance.Stats["PlayerColors"][instance.Turn] = color
-	instance.Stats["DisallowedColors"] = append(instance.Stats["LastColors"], instance.Stats["PlayerColors"][0], instance.Stats["PlayerColors"][1])
+	instance.Stats["DisallowedColors"] = []string{instance.Stats["PlayerColors"][0], instance.Stats["PlayerColors"][1]}
 
 	//Renders new display board
 	for l, line := range instance.Board {

@@ -87,7 +87,6 @@ func UpdateGame(instance *Instance, Input Input) {
 	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
 	Embed.addField("Input", Input.Message, true)
 	Embed.setColor(Blue)
-	Embed.addField(Input.Message, Input.Name, false)
 	Embed.setFooter(instance.ID, "", "")
 	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
 
@@ -171,6 +170,13 @@ func EndGame(instance *Instance, Winner Player, Looser Player) {
 
 	//Removes instance from instances
 	delete(Instances, instance.ID)
+
+	//Save instances to JSON
+	err := saveInstances()
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
 }
 
 //EditGame
@@ -209,4 +215,11 @@ func EditGame(instance *Instance, Input Input) {
 
 	//Sets current message ID
 	instance.CurrentMessageID = newMessage.ID
+
+	//Save instances to JSON
+	err = saveInstances()
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
 }
