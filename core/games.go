@@ -102,7 +102,7 @@ func UpdateGame(instance *Instance, Input Input) {
 	addInput(Input, Opponent.ChannelID, newMessage.ID)
 
 	//Changes the turn
-	instance.Turn = -(instance.Turn) - 1
+	instance.Turn = -(instance.Turn - 1)
 
 	//Sets current input
 	instance.CurrentInput = Input
@@ -137,7 +137,7 @@ func StartGame(instance *Instance, Input Input) {
 	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
 
 	//Adds the options to the message
-	addInput(Input, Opponent.ChannelID, newMessage.ID)
+	addInput(Input, Current.ChannelID, newMessage.ID)
 
 	//Sets current input
 	instance.CurrentInput = Input

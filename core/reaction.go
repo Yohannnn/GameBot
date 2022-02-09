@@ -104,7 +104,7 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 
 		}
 
-		OpponentChan, err := Session.UserChannelCreate(Current.ID)
+		OpponentChan, err := Session.UserChannelCreate(Opponent.ID)
 		if err != nil {
 			log.Error(err.Error())
 			return
