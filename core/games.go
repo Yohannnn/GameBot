@@ -30,6 +30,20 @@ type Instance struct {
 	Turn             int                 `json:"turn"`
 }
 
+//JSONInstance
+//Data for an instance that needs to be written to a json
+type JSONInstance struct {
+	ID               string              `json:"id"`
+	GameName         string              `json:"game_name"`
+	Board            [][]string          `json:"board"`
+	DisplayBoard     [][]string          `json:"display_board"`
+	CurrentInput     Input               `json:"current_input"`
+	Stats            map[string][]string `json:"stats"`
+	CurrentMessageID string              `json:"current_message_id"`
+	Players          []Player            `json:"players"`
+	Turn             int                 `json:"turn"`
+}
+
 //Player
 //The player of a game
 type Player struct {
@@ -69,28 +83,39 @@ func UpdateGame(instance *Instance, Input Input) {
 	//Creates a new embed
 	Embed := newEmbed()
 
-	//Formats the player game board and sets color
+	//Formats and sends message
 	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
 	Embed.addField("Input", Input.Message, true)
 	Embed.setColor(Blue)
-
-	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
-
-	//Adds input field and gameID
 	Embed.addField(Input.Message, Input.Name, false)
 	Embed.setFooter(instance.ID, "", "")
+	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
+
+	//Deletes the old message
+	err := Session.ChannelMessageDelete(Current.ChannelID, instance.CurrentMessageID)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
 
 	//Adds the reactions to the message
 	addInput(Input, Opponent.ChannelID, newMessage.ID)
 
 	//Changes the turn
-	instance.Turn = -instance.Turn - 1
+	instance.Turn = -(instance.Turn) - 1
 
 	//Sets current input
 	instance.CurrentInput = Input
 
 	//Sets current message ID
 	instance.CurrentMessageID = newMessage.ID
+
+	//Save instances to JSON
+	err = saveInstances()
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
 }
 
 //StartGame
@@ -111,9 +136,6 @@ func StartGame(instance *Instance, Input Input) {
 	Embed.setFooter(instance.ID, "", "")
 	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
 
-	//Adds input field and gameID
-	Embed.addField(Input.Message, Input.Name, false)
-
 	//Adds the options to the message
 	addInput(Input, Opponent.ChannelID, newMessage.ID)
 
@@ -122,6 +144,13 @@ func StartGame(instance *Instance, Input Input) {
 
 	//Sets current message ID
 	instance.CurrentMessageID = newMessage.ID
+
+	//Save instances to JSON
+	err := saveInstances()
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
 }
 
 //EndGame

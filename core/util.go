@@ -1,8 +1,11 @@
 package core
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/bwmarrin/discordgo"
+	"io/ioutil"
+	"os"
 	"reflect"
 	"regexp"
 	"strings"
@@ -213,7 +216,7 @@ func RemoveItems(slice []string, deleteables []string) []string {
 //EnsureNumbers
 //Given a string, ensure it contains only numbers
 //This is useful for stripping letters and formatting characters from user/role pings
-func EnsureNumbers(in string) string {
+func ensureNumbers(in string) string {
 	reg, err := regexp.Compile("[^0-9]+")
 	if err != nil {
 		log.Errorf("An unrecoverable error occurred when compiling a regex expression: %s", err)
@@ -227,8 +230,8 @@ func EnsureNumbers(in string) string {
 //Given a string, attempt to remove all numbers from it
 //Additionally, ensure it is at least 17 characters in length
 //This is a way of "cleaning" a Discord ping into a valid snowflake string
-func CleanId(in string) string {
-	out := EnsureNumbers(in)
+func cleanId(in string) string {
+	out := ensureNumbers(in)
 
 	// Discord IDs must be, at minimum, 17 characters long
 	if len(out) < 17 {
@@ -240,8 +243,8 @@ func CleanId(in string) string {
 
 //GetUser
 //Given a user ID, get that user's object (global to Discord, not in a guild)
-func GetUser(userId string) (*discordgo.User, error) {
-	cleanedId := CleanId(userId)
+func getUser(userId string) (*discordgo.User, error) {
+	cleanedId := cleanId(userId)
 	if cleanedId == "" {
 		return nil, errors.New("provided ID is invalid")
 	}
@@ -263,4 +266,35 @@ func MakeCordOption(Xmax int, Ymax int) []string {
 	}
 
 	return Options
+}
+
+//saveInstances
+//Marshals all instances into a JSON and then writes it to a file
+func saveInstances() error {
+	instances := make(map[string]JSONInstance)
+
+	for ID, Instance := range Instances {
+		instances[ID] = JSONInstance{
+			ID:               Instance.ID,
+			GameName:         Instance.Game.Name,
+			Board:            Instance.Board,
+			DisplayBoard:     Instance.DisplayBoard,
+			CurrentInput:     Instance.CurrentInput,
+			Stats:            Instance.Stats,
+			CurrentMessageID: Instance.CurrentMessageID,
+			Players:          Instance.Players,
+			Turn:             Instance.Turn,
+		}
+	}
+
+	jsonString, err := json.MarshalIndent(instances, "", "	")
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile("core/instances.json", jsonString, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return nil
 }

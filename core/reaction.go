@@ -53,7 +53,6 @@ func addInput(option Input, channelID string, messageID string) {
 //Handles reactions for messages the bot has sent
 func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	var output Output
-	var game Game
 
 	//Ignores reactions added by the bot
 	if r.UserID == s.State.User.ID {
@@ -76,10 +75,13 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		return
 	}
 
+	//Gets the game
+	game := Games[strings.ToLower(strings.Split(m.Embeds[0].Title, " ")[0])]
+
 	//Checks the message is a game invite
 	if len(strings.Split(m.Embeds[0].Title, " ")) > 1 {
 		//Checks if the reaction is from the opponent
-		Opponent, err := GetUser(m.Embeds[0].Description[:21])
+		Opponent, err := getUser(m.Embeds[0].Description[:21])
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -87,9 +89,6 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		if r.UserID == Opponent.ID {
 			return
 		}
-
-		//Gets the game
-		game = Games[strings.ToLower(strings.Split(m.Embeds[0].Title, " ")[0])]
 
 		//Get the user struct and dm channel for each player
 		Current, err := Session.User(r.UserID)
@@ -144,9 +143,9 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	output.Name = instance.CurrentInput.Name
 
 	//Gets all valid reactions to the message
-	for _, r := range m.Reactions {
-		if Contains(instance.CurrentInput.Options, r.Emoji.ID) {
-			output.SelOptions = append(output.SelOptions, r.Emoji.ID)
+	for _, e := range m.Reactions {
+		if e.Count == 2 && e.Emoji.Name != "✅" {
+			output.SelOptions = append(output.SelOptions, e.Emoji.Name)
 		}
 	}
 	game.UpdateFunc(instance, output)

@@ -58,7 +58,17 @@ func fillerStart(instance *bot.Instance) {
 
 	input := bot.CreateInput("Color", "Select a color to switch to", reactions)
 
-	instance.DisplayBoard = instance.Board
+	instance.DisplayBoard = [][]string{
+		{"", "", "", "", "", "", "", ""},
+		{"", "", "", "", "", "", "", ""},
+		{"", "", "", "", "", "", "", ""},
+		{"", "", "", "", "", "", "", ""},
+		{"", "", "", "", "", "", "", ""},
+		{"", "", "", "", "", "", "", ""},
+		{"", "", "", "", "", "", "", ""},
+		{"", "", "", "", "", "", "", ""},
+	}
+
 	for l, line := range instance.Board {
 		for i, c := range line {
 			if c == "0" {
@@ -116,29 +126,34 @@ func fillerUpdate(instance *bot.Instance, output bot.Output) {
 			if c == searchVal {
 				//Checks horiz colors
 				if i > 0 {
-					if line[i-1] == color {
-						line[i-1] = searchVal
+					if instance.Board[l][i-1] == color {
+						instance.Board[l][i-1] = searchVal
 					}
 				}
 				if i < 7 {
-					if line[i+1] == color {
-						line[i+1] = searchVal
+					if instance.Board[l][i+1] == color {
+						instance.Board[l][i+1] = searchVal
 					}
 				}
 				//Checks vert colors
 				if l > 0 {
-					if line[l-1] == color {
-						line[l-1] = searchVal
+					if instance.Board[l-1][i] == color {
+						instance.Board[l-1][i] = searchVal
 					}
 				}
 				if l < 7 {
-					if line[l+1] == color {
-						line[l+1] = searchVal
+					if instance.Board[l+1][i] == color {
+						instance.Board[l+1][i] = searchVal
 					}
 				}
 			}
 		}
 	}
+
+	//Defines new game stats
+	instance.Stats["LastColors"][instance.Turn] = instance.Stats["PlayerColors"][instance.Turn]
+	instance.Stats["PlayerColors"][instance.Turn] = color
+	instance.Stats["DisallowedColors"] = append(instance.Stats["LastColors"], instance.Stats["PlayerColors"][0], instance.Stats["PlayerColors"][1])
 
 	//Renders new display board
 	for l, line := range instance.Board {
@@ -154,13 +169,14 @@ func fillerUpdate(instance *bot.Instance, output bot.Output) {
 	}
 
 	//Checks for win
+out:
 	for i, l := range instance.Board {
 		var Count int
 		for _, c := range l {
 			if c == "0" {
 				Count++
 			} else if c != "1" {
-				break
+				break out
 			}
 		}
 		if i == 7 {
@@ -173,10 +189,6 @@ func fillerUpdate(instance *bot.Instance, output bot.Output) {
 			}
 		}
 	}
-
-	instance.Stats["LastColors"][instance.Turn] = instance.Stats["PlayerColors"][instance.Turn]
-	instance.Stats["PlayerColors"][instance.Turn] = color
-	instance.Stats["DisallowedColors"] = append(instance.Stats["LastColors"], instance.Stats["PlayerColors"][0], instance.Stats["PlayerColors"][1])
 
 	for _, c := range bot.RemoveItems(colors, instance.Stats["DisallowedColors"]) {
 		reactions = append(reactions, BoardKey[c])
