@@ -83,7 +83,6 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	//Gets the game
 	game := Games[strings.ToLower(strings.Split(m.Embeds[0].Title, " ")[0])]
 
-	//TODO Handle direct invites
 	//TODO Add check if player has open dms
 	//Checks the message is a game invite
 	if len(strings.Split(m.Embeds[0].Title, " ")) > 1 {
@@ -94,6 +93,11 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 			return
 		}
 		if r.UserID == Opponent.ID {
+			return
+		}
+
+		//Check for direct invite
+		if cleanId(m.Embeds[0].Description[21:]) != "" && cleanId(m.Embeds[0].Description[21:]) != r.UserID {
 			return
 		}
 
@@ -135,14 +139,15 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		}
 		Instances[instance.ID] = &instance
 
-		//Starts a new game
-		game.StartFunc(&instance)
-
 		//Deletes invite
 		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
 		if err != nil {
 			log.Error(err.Error())
 		}
+
+		//Starts a new game
+		game.StartFunc(&instance)
+
 		return
 	}
 
