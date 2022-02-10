@@ -17,7 +17,7 @@ func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	//Unmarshalls instances JSON
-	file, err := os.Open("core/instances.json")
+	file, err := os.Open("instances.json")
 	if err != nil {
 		log.Fatal(err.Error())
 	}

@@ -33,20 +33,19 @@ func CreateInput(name string, message string, options []string) Input {
 
 //addInput
 //Adds an Input to a message
-func addInput(option Input, channelID string, messageID string) {
+func addInput(option Input, channelID string, messageID string) error {
 	for _, e := range option.Options {
 		err := Session.MessageReactionAdd(channelID, messageID, e)
 		if err != nil {
-			log.Error(err.Error())
-			return
+			return err
 		}
 	}
 
 	err := Session.MessageReactionAdd(channelID, messageID, "✅")
 	if err != nil {
-		log.Error(err.Error())
-		return
+		return err
 	}
+	return nil
 }
 
 //reactionHandler
@@ -151,14 +150,19 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		return
 	}
 
+	//TODO check if the instance exists
 	instance := Instances[m.Embeds[0].Footer.Text]
 	output.Name = instance.CurrentInput.Name
 
 	//Gets all valid reactions to the message
-	for _, e := range m.Reactions {
+	for i, e := range m.Reactions {
 		if e.Count == 2 && e.Emoji.Name != "✅" {
 			output.SelOptions = append(output.SelOptions, e.Emoji.Name)
+		} else if i == len(m.Reactions) {
+			return
 		}
 	}
+
+	//Updates the game
 	game.UpdateFunc(instance, output)
 }

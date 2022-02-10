@@ -91,7 +91,12 @@ func UpdateGame(instance *Instance, Input Input) {
 	Embed.addField("Input", Input.Message, true)
 	Embed.setColor(Blue)
 	Embed.setFooter(instance.ID, "", "")
-	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
+	newMessage, err := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Current.Name), Opponent.ChannelID)
+	if err != nil {
+		log.Error(err.Error())
+		AbortGame(instance, err.Error())
+		return
+	}
 
 	//Formats sent embed
 	SentEmb.setColor(Green)
@@ -101,7 +106,12 @@ func UpdateGame(instance *Instance, Input Input) {
 	SentEmb.edit("Sent!", fmt.Sprintf("Sent %s update to %s", instance.Game.Name, Opponent.Name), Current.ChannelID, instance.CurrentMessageID)
 
 	//Adds the reactions to the message
-	addInput(Input, Opponent.ChannelID, newMessage.ID)
+	err = addInput(Input, Opponent.ChannelID, newMessage.ID)
+	if err != nil {
+		log.Error(err.Error())
+		AbortGame(instance, err.Error())
+		return
+	}
 
 	//Changes the turn
 	instance.Turn = -(instance.Turn - 1)
@@ -113,7 +123,7 @@ func UpdateGame(instance *Instance, Input Input) {
 	instance.CurrentMessageID = newMessage.ID
 
 	//Save instances to JSON
-	err := saveInstances()
+	err = saveInstances()
 	if err != nil {
 		log.Error(err.Error())
 		return
@@ -136,10 +146,19 @@ func StartGame(instance *Instance, Input Input) {
 	Embed.addField("Input", Input.Message, true)
 	Embed.setColor(Blue)
 	Embed.setFooter(instance.ID, "", "")
-	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
+	newMessage, err := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
+	if err != nil {
+		log.Error(err.Error())
+		AbortGame(instance, err.Error())
+		return
+	}
 
-	//Adds the options to the message
-	addInput(Input, Current.ChannelID, newMessage.ID)
+	err = addInput(Input, Current.ChannelID, newMessage.ID)
+	if err != nil {
+		log.Error(err.Error())
+		AbortGame(instance, err.Error())
+		return
+	}
 
 	//Sets current input
 	instance.CurrentInput = Input
@@ -148,7 +167,7 @@ func StartGame(instance *Instance, Input Input) {
 	instance.CurrentMessageID = newMessage.ID
 
 	//Save instances to JSON
-	err := saveInstances()
+	err = saveInstances()
 	if err != nil {
 		log.Error(err.Error())
 		return
@@ -165,19 +184,30 @@ func EndGame(instance *Instance, Winner Player, Looser Player) {
 
 	//Sets color and sends to winner
 	Embed.setColor(Yellow)
-	Embed.send(instance.Game.Name, fmt.Sprintf("You won your %s game against %s", instance.Game.Name, Looser.Name), Winner.ChannelID)
+	_, err := Embed.send(instance.Game.Name, fmt.Sprintf("You won your %s game against %s", instance.Game.Name, Looser.Name), Winner.ChannelID)
+	if err != nil {
+		log.Error(err.Error())
+		AbortGame(instance, err.Error())
+		return
+	}
 
 	//Sets color and sends to looser
 	Embed.setColor(Red)
-	Embed.send(instance.Game.Name, fmt.Sprintf("You lost your %s game against %s", instance.Game.Name, Winner.Name), Looser.ChannelID)
+	_, err = Embed.send(instance.Game.Name, fmt.Sprintf("You lost your %s game against %s", instance.Game.Name, Winner.Name), Looser.ChannelID)
+	if err != nil {
+		log.Error(err.Error())
+		AbortGame(instance, err.Error())
+		return
+	}
 
 	//Removes instance from instances
 	delete(Instances, instance.ID)
 
 	//Save instances to JSON
-	err := saveInstances()
+	err = saveInstances()
 	if err != nil {
 		log.Error(err.Error())
+		AbortGame(instance, err.Error())
 		return
 	}
 }
@@ -195,15 +225,22 @@ func EditGame(instance *Instance, Input Input) {
 	//Formats the player game board and sets color
 	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
 	Embed.addField("Input", Input.Message, true)
+	Embed.setFooter(instance.ID, "", "")
 	Embed.setColor(Blue)
 
 	//Sends the new message
-	newMessage := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
-
-	//Deletes the old message
-	err := Session.ChannelMessageDelete(Current.ChannelID, instance.CurrentMessageID)
+	newMessage, err := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
 	if err != nil {
 		log.Error(err.Error())
+		AbortGame(instance, err.Error())
+		return
+	}
+
+	//Deletes the old message
+	err = Session.ChannelMessageDelete(Current.ChannelID, instance.CurrentMessageID)
+	if err != nil {
+		log.Error(err.Error())
+		AbortGame(instance, err.Error())
 		return
 	}
 
@@ -212,7 +249,12 @@ func EditGame(instance *Instance, Input Input) {
 	Embed.setFooter(instance.ID, "", "")
 
 	//Adds the reactions to the message
-	addInput(Input, Current.ChannelID, newMessage.ID)
+	err = addInput(Input, Current.ChannelID, newMessage.ID)
+	if err != nil {
+		log.Error(err.Error())
+		AbortGame(instance, err.Error())
+		return
+	}
 
 	//Sets current input
 	instance.CurrentInput = Input
@@ -222,6 +264,32 @@ func EditGame(instance *Instance, Input Input) {
 
 	//Save instances to JSON
 	err = saveInstances()
+	if err != nil {
+		log.Error(err.Error())
+		AbortGame(instance, err.Error())
+		return
+	}
+}
+
+//AbortGame
+//Aborts a currently running game for a given reason
+func AbortGame(instance *Instance, reason string) {
+	//Creates and formats new embed
+	Embed := newEmbed()
+	Embed.setColor(Red)
+	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
+	Embed.addField("Error", reason, true)
+
+	//Sends abort message to each player
+	for _, p := range instance.Players {
+		Embed.send(fmt.Sprintf("%s Aborted", instance.Game.Name), fmt.Sprintf("This %s game has been aborted", instance.Game.Name), p.ChannelID)
+	}
+
+	//Deletes game instance
+	delete(Instances, instance.ID)
+
+	//Save instances to JSON
+	err := saveInstances()
 	if err != nil {
 		log.Error(err.Error())
 		return

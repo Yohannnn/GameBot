@@ -30,7 +30,7 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	switch command {
 
 	//Gives a list of all games
-	case "games":
+	case "gamelist":
 		var names string
 		for _, g := range Games {
 			names += g.Name + ", "
@@ -38,16 +38,20 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		embed := newEmbed()
 		embed.setColor(Blue)
-		embed.send("Games", fmt.Sprintf("The currently playable games are: %s\"To see more information about a particular game you can run !GameInfo <GameName>\"", names), m.ChannelID)
+		_, err := embed.send("Games", fmt.Sprintf("The currently playable games are: %s\"To see more information about a particular game you can run !GameInfo <GameName>\"", names), m.ChannelID)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
 
 		//Deletes the command message
-		err := s.ChannelMessageDelete(m.ChannelID, m.ID)
+		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
 		if err != nil {
 			log.Error(err.Error())
 		}
 
 	//Creates an invite to a game
-	case "playgame":
+	case "gameinvite":
 		//Pares args for gameInfo
 		game := Games[strings.ToLower(args[0])]
 
@@ -57,13 +61,23 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		//Sets invite channel and description
 		if len(args) >= 2 {
-			newMessage = embed.send(fmt.Sprintf("%s invite!", game.Name), fmt.Sprintf(
+			var err error
+			newMessage, err = embed.send(fmt.Sprintf("%s invite!", game.Name), fmt.Sprintf(
 				"%s invited %s to play %s! React with ✅ to accept.",
 				m.Author.Mention(), args[1], game.Name), m.ChannelID)
+			if err != nil {
+				log.Error(err.Error())
+				return
+			}
 		} else {
-			newMessage = embed.send(fmt.Sprintf("%s Invite!", game.Name),
+			var err error
+			newMessage, err = embed.send(fmt.Sprintf("%s Invite!", game.Name),
 				fmt.Sprintf("%s invited anyone to play %s! React with ✅ to accept.",
 					m.Author.Mention(), game.Name), m.ChannelID)
+			if err != nil {
+				log.Error(err.Error())
+				return
+			}
 		}
 
 		//Adds confirmation emoji
@@ -94,10 +108,14 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		embed.addField("Rules", game.Rules, true)
 		embed.addField("Board", formatBoard(game.ExampleBoard), true)
 		embed.setColor(Blue)
-		embed.send(game.Name, game.Description, m.ChannelID)
+		_, err := embed.send(game.Name, game.Description, m.ChannelID)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
 
 		//Deletes the command message
-		err := s.ChannelMessageDelete(m.ChannelID, m.ID)
+		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
 		if err != nil {
 			log.Error(err.Error())
 		}

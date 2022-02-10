@@ -38,9 +38,17 @@ func Start() {
 	err = Session.Open()
 	if err != nil {
 		log.Error(err.Error())
+		return
 	}
 
-	log.Info("Bot is now running.  Press CTRL-C to exit.")
+	//Sets status
+	err = Session.UpdateGameStatus(0, "Wit yo balls")
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	log.Info("Bot is now running")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc

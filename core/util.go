@@ -96,7 +96,7 @@ func newEmbed() *embed {
 
 //send
 //Sends the embed message
-func (e *embed) send(title string, description string, channelID string) *discordgo.Message {
+func (e *embed) send(title string, description string, channelID string) (*discordgo.Message, error) {
 	if len(title) > 256 {
 		title = title[:256]
 	}
@@ -108,9 +108,9 @@ func (e *embed) send(title string, description string, channelID string) *discor
 	e.Description = description
 	m, err := Session.ChannelMessageSendEmbed(channelID, e.MessageEmbed)
 	if err != nil {
-		log.Error(err.Error())
+		return nil, err
 	}
-	return m
+	return m, nil
 }
 
 //edit
@@ -220,7 +220,7 @@ func RemoveItems(slice []string, deleteables []string) []string {
 	return newSlice
 }
 
-//EnsureNumbers
+//ensureNumbers
 //Given a string, ensure it contains only numbers
 //This is useful for stripping letters and formatting characters from user/role pings
 func ensureNumbers(in string) string {
@@ -233,7 +233,7 @@ func ensureNumbers(in string) string {
 	return reg.ReplaceAllString(in, "")
 }
 
-//CleanId
+//cleanId
 //Given a string, attempt to remove all numbers from it
 //Additionally, ensure it is at least 17 characters in length
 //This is a way of "cleaning" a Discord ping into a valid snowflake string
@@ -248,7 +248,7 @@ func cleanId(in string) string {
 	return out
 }
 
-//GetUser
+//getUser
 //Given a user ID, get that user's object (global to Discord, not in a guild)
 func getUser(userId string) (*discordgo.User, error) {
 	cleanedId := cleanId(userId)
@@ -299,7 +299,7 @@ func saveInstances() error {
 		return err
 	}
 
-	err = ioutil.WriteFile("core/instances.json", jsonString, os.ModePerm)
+	err = ioutil.WriteFile("instances.json", jsonString, os.ModePerm)
 	if err != nil {
 		return err
 	}

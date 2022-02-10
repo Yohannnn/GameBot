@@ -2,6 +2,7 @@ package games
 
 import (
 	bot "GameBot/core"
+	"fmt"
 	"math/rand"
 )
 
@@ -55,7 +56,14 @@ func fillerStart(instance *bot.Instance) {
 		reactions = append(reactions, boardKey[c])
 	}
 
-	input := bot.CreateInput("Color", "Select a color to switch to", reactions)
+	var location string
+	if instance.Turn == 1 {
+		location = "bottom left"
+	} else {
+		location = "top right"
+	}
+
+	input := bot.CreateInput("Color", fmt.Sprintf("Select a color to switch to.\nYou are in the %s.", location), reactions)
 
 	instance.DisplayBoard = [][]string{
 		{"", "", "", "", "", "", "", ""},
@@ -192,7 +200,14 @@ out:
 		reactions = append(reactions, boardKey[c])
 	}
 
-	input := bot.CreateInput("Color", "Select a color to switch to", reactions)
+	var location string
+	if instance.Turn == 1 {
+		location = "bottom left"
+	} else {
+		location = "top right"
+	}
+
+	input := bot.CreateInput("Color", fmt.Sprintf("Select a color to switch to.\nYou are in the %s.", location), reactions)
 
 	//Sends update
 	bot.UpdateGame(instance, input)
@@ -202,10 +217,12 @@ out:
 func init() {
 	bot.AddGame("Filler",
 		"Try to fill the entire board with your color",
-		"I'll write rules soon on god",
+		"1. Player 1 starts as the bottom left square and player 2 starts as the top right square."+
+			"\n\n2. Each turn you can switch your color and every square adjacent to the one you already own that are that color you now also own,"+
+			"\n\n3. The player that has the most squares by the time there are no more square to take wins",
 		[][]string{
 			{bot.OrangeSqr, bot.BrownSqr, bot.BlueSqr, bot.YellowSqr, bot.GreenSqr, bot.BlueSqr, bot.BlueSqr, bot.BlueSqr},
-			{bot.YellowSqr, bot.YellowSqr, bot.BrownSqr, bot.BrownSqr, bot.PurpleSqr, bot.BlueSqr, bot.BlueSqr, bot.BlueSqr},
+			{bot.YellowSqr, bot.OrangeSqr, bot.BrownSqr, bot.BrownSqr, bot.PurpleSqr, bot.BlueSqr, bot.BlueSqr, bot.BlueSqr},
 			{bot.BlueSqr, bot.GreenSqr, bot.OrangeSqr, bot.YellowSqr, bot.GreenSqr, bot.BlueSqr, bot.BlueSqr, bot.BlueSqr},
 			{bot.RedSqr, bot.BrownSqr, bot.RedSqr, bot.BlueSqr, bot.PurpleSqr, bot.BlueSqr, bot.BlueSqr, bot.BlueSqr},
 			{bot.RedSqr, bot.RedSqr, bot.OrangeSqr, bot.PurpleSqr, bot.YellowSqr, bot.BlueSqr, bot.PurpleSqr, bot.RedSqr},
