@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "GameBot/commands"
 	bot "GameBot/core"
 	_ "GameBot/games"
 	"encoding/json"
@@ -29,7 +30,11 @@ func main() {
 	}
 
 	JSONInstances := make(map[string]bot.JSONInstance)
-	json.Unmarshal(byteval, &JSONInstances)
+	err = json.Unmarshal(byteval, &JSONInstances)
+	if err != nil {
+		log.Fatal(err.Error())
+
+	}
 
 	for ID, inst := range JSONInstances {
 		bot.Instances[ID] = &bot.Instance{

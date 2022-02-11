@@ -1,11 +1,8 @@
 package core
 
 import (
-	"encoding/json"
 	"errors"
 	"github.com/bwmarrin/discordgo"
-	"io/ioutil"
-	"os"
 	"reflect"
 	"regexp"
 	"strings"
@@ -273,35 +270,4 @@ func MakeCordOption(Xmax int, Ymax int) []string {
 	}
 
 	return Options
-}
-
-//saveInstances
-//Marshals all instances into a JSON and then writes it to a file
-func saveInstances() error {
-	instances := make(map[string]JSONInstance)
-
-	for ID, Instance := range Instances {
-		instances[ID] = JSONInstance{
-			ID:               Instance.ID,
-			GameName:         Instance.Game.Name,
-			Board:            Instance.Board,
-			DisplayBoard:     Instance.DisplayBoard,
-			CurrentInput:     Instance.CurrentInput,
-			Stats:            Instance.Stats,
-			CurrentMessageID: Instance.CurrentMessageID,
-			Players:          Instance.Players,
-			Turn:             Instance.Turn,
-		}
-	}
-
-	jsonString, err := json.MarshalIndent(instances, "", "	")
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile("instances.json", jsonString, os.ModePerm)
-	if err != nil {
-		return err
-	}
-	return nil
 }

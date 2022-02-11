@@ -1,7 +1,10 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -52,7 +55,11 @@ type Player struct {
 	ChannelID string
 }
 
-//TODO create separate player struct that deals that keeps tracks of wins and is stored in a JSON
+//TODO Create separate player struct that deals that keeps tracks of wins and is stored in a JSON
+
+//PlayersWins
+//Win count of every player
+var PlayersWins = make(map[string]map[string]int)
 
 //Games
 //Map games names to their game struct
@@ -298,3 +305,37 @@ func AbortGame(instance *Instance, reason string) {
 		return
 	}
 }
+
+//saveInstances
+//Marshals all instances into a JSON and then writes it to a file
+func saveInstances() error {
+	instances := make(map[string]JSONInstance)
+
+	for ID, Instance := range Instances {
+		instances[ID] = JSONInstance{
+			ID:               Instance.ID,
+			GameName:         Instance.Game.Name,
+			Board:            Instance.Board,
+			DisplayBoard:     Instance.DisplayBoard,
+			CurrentInput:     Instance.CurrentInput,
+			Stats:            Instance.Stats,
+			CurrentMessageID: Instance.CurrentMessageID,
+			Players:          Instance.Players,
+			Turn:             Instance.Turn,
+		}
+	}
+
+	jsonString, err := json.MarshalIndent(instances, "", "	")
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile("instances.json", jsonString, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//savePlayerWins
+//Marshals all player win counts to a json then writes them to a file

@@ -2,7 +2,6 @@ package games
 
 import (
 	bot "GameBot/core"
-	"fmt"
 	"math/rand"
 )
 
@@ -57,13 +56,13 @@ func fillerStart(instance *bot.Instance) {
 	}
 
 	var location string
-	if instance.Turn == 1 {
-		location = "bottom left"
+	if instance.Turn == 0 {
+		location = "bottom left."
 	} else {
-		location = "top right"
+		location = "top right."
 	}
 
-	input := bot.CreateInput("Color", fmt.Sprintf("Select a color to switch to.\nYou are in the %s.", location), reactions)
+	input := bot.CreateInput("Color", "Select a color to switch to.\nYou are in the"+location, reactions)
 
 	instance.DisplayBoard = [][]string{
 		{"", "", "", "", "", "", "", ""},
@@ -202,12 +201,12 @@ out:
 
 	var location string
 	if instance.Turn == 1 {
-		location = "bottom left"
+		location = "bottom left."
 	} else {
-		location = "top right"
+		location = "top right."
 	}
 
-	input := bot.CreateInput("Color", fmt.Sprintf("Select a color to switch to.\nYou are in the %s.", location), reactions)
+	input := bot.CreateInput("Color", "Select a color to switch to.\nYou are in the"+location, reactions)
 
 	//Sends update
 	bot.UpdateGame(instance, input)

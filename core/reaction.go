@@ -102,6 +102,12 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 			return
 		}
 
+		//Deletes invite
+		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
+		if err != nil {
+			log.Error(err.Error())
+		}
+
 		//Get the user struct and dm channel for each player
 		Current, err := Session.User(r.UserID)
 		if err != nil {
@@ -140,31 +146,27 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		}
 		Instances[instance.ID] = &instance
 
-		//Deletes invite
-		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
-		if err != nil {
-			log.Error(err.Error())
-		}
-
 		//Starts a new game
-		game.StartFunc(&instance)
+		go game.StartFunc(&instance)
 
 		return
 	}
 
-	//TODO check if the instance exists
-	instance := Instances[m.Embeds[0].Footer.Text]
+	instance, ok := Instances[m.Embeds[0].Footer.Text]
+	if !ok {
+		return
+	}
 	output.Name = instance.CurrentInput.Name
 
 	//Gets all valid reactions to the message
 	for i, e := range m.Reactions {
 		if e.Count == 2 && e.Emoji.Name != "✅" {
 			output.SelOptions = append(output.SelOptions, e.Emoji.Name)
-		} else if i == len(m.Reactions) {
+		} else if i == len(m.Reactions)-1 && len(output.SelOptions) == 0 {
 			return
 		}
 	}
 
 	//Updates the game
-	game.UpdateFunc(instance, output)
+	go game.UpdateFunc(instance, output)
 }

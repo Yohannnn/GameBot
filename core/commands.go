@@ -6,7 +6,9 @@ import (
 	"strings"
 )
 
-//TODO switch to slash commands
+//TODO Switch to slash commands
+//TODO Add admin commands
+//TODO Switch to modular commands
 //Handler for handling commands
 func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	//Defers panic to error handler
@@ -37,9 +39,9 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			names += g.Name + ", "
 		}
 
-		embed := newEmbed()
-		embed.setColor(Blue)
-		_, err := embed.send("Games", fmt.Sprintf("The currently playable games are: %s\"To see more information about a particular game you can run !GameInfo <GameName>\"", names), m.ChannelID)
+		Embed := newEmbed()
+		Embed.setColor(Blue)
+		_, err := Embed.send("Games", fmt.Sprintf("The currently playable games are: %s\"To see more information about a particular game you can run !GameInfo <GameName>\"", names), m.ChannelID)
 		if err != nil {
 			log.Error(err.Error())
 			return
@@ -56,14 +58,14 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		//Pares args for gameInfo
 		game := Games[strings.ToLower(args[0])]
 
-		//Formats embed message
-		embed := newEmbed()
-		embed.setColor(Green)
+		//Formats Embed message
+		Embed := newEmbed()
+		Embed.setColor(Green)
 
 		//Sets invite channel and description
 		if len(args) >= 2 {
 			var err error
-			newMessage, err = embed.send(fmt.Sprintf("%s invite!", game.Name), fmt.Sprintf(
+			newMessage, err = Embed.send(fmt.Sprintf("%s invite!", game.Name), fmt.Sprintf(
 				"%s invited %s to play %s! React with ✅ to accept.",
 				m.Author.Mention(), args[1], game.Name), m.ChannelID)
 			if err != nil {
@@ -72,7 +74,7 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		} else {
 			var err error
-			newMessage, err = embed.send(fmt.Sprintf("%s Invite!", game.Name),
+			newMessage, err = Embed.send(fmt.Sprintf("%s Invite!", game.Name),
 				fmt.Sprintf("%s invited anyone to play %s! React with ✅ to accept.",
 					m.Author.Mention(), game.Name), m.ChannelID)
 			if err != nil {
@@ -96,12 +98,12 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	//Gives the info for a game
 	case "gameinfo":
-		//Creates a new embed
-		embed := newEmbed()
+		//Creates a new Embed
+		Embed := newEmbed()
 		//Checks if game exits
 		if _, ok := Games[args[0]]; !ok {
-			embed.setColor(14495300)
-			_, err := embed.send(m.ChannelID, "Error!", "The requested game does not exist.")
+			Embed.setColor(14495300)
+			_, err := Embed.send(m.ChannelID, "Error!", "The requested game does not exist.")
 			if err != nil {
 				log.Error(err.Error())
 				return
@@ -109,11 +111,40 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 		//Parses args for gameInfo
 		game := Games[args[0]]
-		//Formats and sends embed message
-		embed.addField("Rules", game.Rules, true)
-		embed.addField("Board", formatBoard(game.ExampleBoard), true)
-		embed.setColor(Blue)
-		_, err := embed.send(game.Name, game.Description, m.ChannelID)
+		//Formats and sends Embed message
+		Embed.addField("Rules", game.Rules, true)
+		Embed.addField("Board", formatBoard(game.ExampleBoard), true)
+		Embed.setColor(Blue)
+		_, err := Embed.send(game.Name, game.Description, m.ChannelID)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		//Deletes the command message
+		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
+		if err != nil {
+			log.Error(err.Error())
+		}
+
+		//Gives the amount of wins per game
+	case "wins":
+		//Creates a new Embed
+		Embed := newEmbed()
+		//Checks if game exits
+		if _, ok := Games[args[0]]; !ok {
+			Embed.setColor(14495300)
+			_, err := Embed.send(m.ChannelID, "Error!", "The requested game does not exist.")
+			if err != nil {
+				log.Error(err.Error())
+				return
+			}
+		}
+		//Parses args for gameInfo
+		game := Games[args[0]]
+		//Formats and sends Embed message
+		Embed.setColor(Yellow)
+		_, err := Embed.send(game.Name+" wins", fmt.Sprintf("%s has %d wins in %s", m.Author.Mention(), PlayersWins[m.Author.ID][game.Name], game.Name), m.ChannelID)
 		if err != nil {
 			log.Error(err.Error())
 			return
