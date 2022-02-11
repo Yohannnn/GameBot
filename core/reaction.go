@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+//TODO Also use buttons along with reactions
+
 //Input
 //An input for a game update
 type Input struct {

@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+//TODO switch to slash commands
 //Handler for handling commands
 func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	//Defers panic to error handler
@@ -100,7 +101,11 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		//Checks if game exits
 		if _, ok := Games[args[0]]; !ok {
 			embed.setColor(14495300)
-			embed.send(m.ChannelID, "Error!", "The requested game does not exist.")
+			_, err := embed.send(m.ChannelID, "Error!", "The requested game does not exist.")
+			if err != nil {
+				log.Error(err.Error())
+				return
+			}
 		}
 		//Parses args for gameInfo
 		game := Games[args[0]]

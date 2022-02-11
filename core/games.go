@@ -100,7 +100,6 @@ func UpdateGame(instance *Instance, Input Input) {
 
 	//Formats sent embed
 	SentEmb.setColor(Green)
-	SentEmb.setFooter(instance.ID, "", "")
 
 	//Edits old message to sent
 	SentEmb.edit("Sent!", fmt.Sprintf("Sent %s update to %s", instance.Game.Name, Opponent.Name), Current.ChannelID, instance.CurrentMessageID)
@@ -282,7 +281,11 @@ func AbortGame(instance *Instance, reason string) {
 
 	//Sends abort message to each player
 	for _, p := range instance.Players {
-		Embed.send(fmt.Sprintf("%s Aborted", instance.Game.Name), fmt.Sprintf("This %s game has been aborted", instance.Game.Name), p.ChannelID)
+		_, err := Embed.send(fmt.Sprintf("%s Aborted", instance.Game.Name), fmt.Sprintf("This %s game has been aborted", instance.Game.Name), p.ChannelID)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
 	}
 
 	//Deletes game instance
