@@ -11,43 +11,44 @@ import (
 	"time"
 )
 
-//Session
-//The session of the bot
+// Session
+// The session of the bot
 var Session *discordgo.Session
 
-//log
-//The logger for the bot
+// TODO Rework logging
+// log
+// The logger for the bot
 var log = tlog.NewTaggedLogger("BotCore", tlog.NewColor("38;5;111"))
 
-//TODO Wait for some functions to finish before shutting down
+// TODO Wait for some functions to finish before shutting down
 
-//Start
-//Starts the bot
+// Start
+// Starts the bot
 func Start() {
-	//Load token
+	// Load token
 	err := godotenv.Load("./.env")
 	if err != nil {
 		log.Error(err.Error())
 	}
 
-	//Create a new Discord session
+	// Create a new Discord session
 	Session, err = discordgo.New("Bot " + os.Getenv("Token"))
 	if err != nil {
 		log.Error(err.Error())
 	}
 
-	//Add Handlers
+	// Add Handlers
 	Session.AddHandler(commandHandler)
 	Session.AddHandler(reactionHandler)
 
-	//Start discord session
+	// Start discord session
 	err = Session.Open()
 	if err != nil {
 		log.Error(err.Error())
 		return
 	}
 
-	//Sets status
+	// Sets status
 	go setStatus()
 
 	log.Info("Bot is now running")
@@ -55,7 +56,7 @@ func Start() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
-	//Close session when finished
+	// Close session when finished
 	err = Session.Close()
 }
 

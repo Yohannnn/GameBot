@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-//Colors
+// Colors
 const (
 	Red    = 14495300
 	Brown  = 12675407
@@ -20,7 +20,7 @@ const (
 	White  = 15132648
 )
 
-//Squares
+// Squares
 const (
 	RedSqr    = "🟥"
 	BrownSqr  = "🟫"
@@ -33,8 +33,8 @@ const (
 	BlackSqr  = "⬛"
 )
 
-//NumCord
-//A map of numbers to their emoji (except 0 cause its sus)
+// NumCord
+// A map of numbers to their emoji (except 0 cause its sus)
 var NumCord = map[int]string{
 	1:  "1️⃣",
 	2:  "2️⃣",
@@ -48,8 +48,8 @@ var NumCord = map[int]string{
 	10: "🔟",
 }
 
-//LetCord
-//A map of a letters place in the alphabet to its emoji
+// LetCord
+// A map of a letters place in the alphabet to its emoji
 var LetCord = map[int]string{
 	1:  "🇦",
 	2:  "🇧",
@@ -79,20 +79,20 @@ var LetCord = map[int]string{
 	27: "🇿",
 }
 
-//embed
-//Struct for response
+// embed
+// Struct for response
 type embed struct {
 	*discordgo.MessageEmbed
 }
 
-//newEmbed
-//Returns a new embed object
+// newEmbed
+// Returns a new embed object
 func newEmbed() *embed {
 	return &embed{&discordgo.MessageEmbed{}}
 }
 
-//send
-//Sends the embed message
+// send
+// Sends the embed message
 func (e *embed) send(title string, description string, channelID string) (*discordgo.Message, error) {
 	if len(title) > 256 {
 		title = title[:256]
@@ -110,8 +110,8 @@ func (e *embed) send(title string, description string, channelID string) (*disco
 	return m, nil
 }
 
-//edit
-//Edits an embed message
+// edit
+// Edits an embed message
 func (e *embed) edit(title string, description string, channelID string, messageID string) *discordgo.Message {
 	if len(title) > 256 {
 		title = title[:256]
@@ -129,20 +129,20 @@ func (e *embed) edit(title string, description string, channelID string, message
 	return m
 }
 
-//addField
-//Adds a field to a response object
+// addField
+// Adds a field to a response object
 func (e *embed) addField(name string, value string, inline bool) {
-	// Cuts value short if it's longer than 1024 characters
+	//  Cuts value short if it's longer than 1024 characters
 	if len(value) > 1024 {
 		value = value[:1024]
 	}
 
-	//Cuts name short if it's longer than 1024 characters
+	// Cuts name short if it's longer than 1024 characters
 	if len(name) > 1024 {
 		value = value[:1024]
 	}
 
-	//Adds the field to the embed object
+	// Adds the field to the embed object
 	e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
 		Name:   name,
 		Value:  value,
@@ -150,8 +150,8 @@ func (e *embed) addField(name string, value string, inline bool) {
 	})
 }
 
-//setFooter
-//Sets the footer of an embed
+// setFooter
+// Sets the footer of an embed
 func (e *embed) setFooter(text string, iconURL string, proxyIconURL string) {
 	e.Footer = &discordgo.MessageEmbedFooter{
 		Text:         text,
@@ -160,14 +160,14 @@ func (e *embed) setFooter(text string, iconURL string, proxyIconURL string) {
 	}
 }
 
-//setColor
-//Sets the color of an embed message
+// setColor
+// Sets the color of an embed message
 func (e *embed) setColor(clr int) {
 	e.Color = clr
 }
 
-//Contains
-//Checks if an array contains an element
+// Contains
+// Checks if an array contains an element
 func Contains(arrayType interface{}, item interface{}) bool {
 	arr := reflect.ValueOf(arrayType)
 
@@ -180,8 +180,8 @@ func Contains(arrayType interface{}, item interface{}) bool {
 	return false
 }
 
-//formatBoard
-//Formats a game board into a string
+// formatBoard
+// Formats a game board into a string
 func formatBoard(board [][]string) string {
 	var BoardString string
 	var LineString string
@@ -205,8 +205,8 @@ func formatBoard(board [][]string) string {
 	return BoardString
 }
 
-//RemoveItems
-//Remove items from a slice by value
+// RemoveItems
+// Remove items from a slice by value
 func RemoveItems(slice []string, deleteables []string) []string {
 	var newSlice []string
 	for _, elem := range slice {
@@ -217,9 +217,9 @@ func RemoveItems(slice []string, deleteables []string) []string {
 	return newSlice
 }
 
-//ensureNumbers
-//Given a string, ensure it contains only numbers
-//This is useful for stripping letters and formatting characters from user/role pings
+// ensureNumbers
+// Given a string, ensure it contains only numbers
+// This is useful for stripping letters and formatting characters from user/role pings
 func ensureNumbers(in string) string {
 	reg, err := regexp.Compile("[^0-9]+")
 	if err != nil {
@@ -230,14 +230,14 @@ func ensureNumbers(in string) string {
 	return reg.ReplaceAllString(in, "")
 }
 
-//cleanId
-//Given a string, attempt to remove all numbers from it
-//Additionally, ensure it is at least 17 characters in length
-//This is a way of "cleaning" a Discord ping into a valid snowflake string
+// cleanId
+// Given a string, attempt to remove all numbers from it
+// Additionally, ensure it is at least 17 characters in length
+// This is a way of "cleaning" a Discord ping into a valid snowflake string
 func cleanId(in string) string {
 	out := ensureNumbers(in)
 
-	// Discord IDs must be, at minimum, 17 characters long
+	//  Discord IDs must be, at minimum, 17 characters long
 	if len(out) < 17 {
 		return ""
 	}
@@ -245,8 +245,8 @@ func cleanId(in string) string {
 	return out
 }
 
-//getUser
-//Given a user ID, get that user's object (global to Discord, not in a guild)
+// getUser
+// Given a user ID, get that user's object (global to Discord, not in a guild)
 func getUser(userId string) (*discordgo.User, error) {
 	cleanedId := cleanId(userId)
 	if cleanedId == "" {
@@ -256,8 +256,8 @@ func getUser(userId string) (*discordgo.User, error) {
 	return Session.User(cleanedId)
 }
 
-//MakeCordOption
-//Takes 2 integers (max value for each cord) and returns an array of corresponding emojis
+// MakeCordOption
+// Takes 2 integers (max value for each cord) and returns an array of corresponding emojis
 func MakeCordOption(Xmax int, Ymax int) []string {
 	var Options []string
 

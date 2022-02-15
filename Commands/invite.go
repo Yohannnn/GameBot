@@ -1,3 +1,0 @@
-package Commands
-
-func invite() {}

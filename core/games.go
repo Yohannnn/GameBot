@@ -8,19 +8,27 @@ import (
 	"strings"
 )
 
-//Game
-//Information about a game
+// Game
+// Information about a game
 type Game struct {
 	Name         string
 	Description  string
 	Rules        string
 	ExampleBoard [][]string
-	StartFunc    func(*Instance)
-	UpdateFunc   func(*Instance, Output)
+	StartFunc    StartFunction
+	UpdateFunc   updateFunction
 }
 
-//Instance
-//An instance of a game
+// StartFunction
+// Function that runs when a game is started
+type StartFunction func(*Instance)
+
+// updateFunction
+// Function that runs when a games updates
+type updateFunction func(*Instance, Output)
+
+// Instance
+// An instance of a game
 type Instance struct {
 	ID               string
 	Game             Game
@@ -33,8 +41,8 @@ type Instance struct {
 	Turn             int
 }
 
-//JSONInstance
-//Data for an instance that needs to be written to a json
+// JSONInstance
+// Data for an instance that needs to be written to a json
 type JSONInstance struct {
 	ID               string              `json:"id"`
 	GameName         string              `json:"game_name"`
@@ -47,31 +55,31 @@ type JSONInstance struct {
 	Turn             int                 `json:"turn"`
 }
 
-//Player
-//The player of a game
+// Player
+// The player of a game
 type Player struct {
 	ID        string
 	Name      string
 	ChannelID string
 }
 
-//TODO Create separate player struct that deals that keeps tracks of wins and is stored in a JSON
+// TODO Save count of player wins
 
-//PlayersWins
-//Win count of every player
+// PlayersWins
+// Win count of every player
 var PlayersWins = make(map[string]map[string]int)
 
-//Games
-//Map games names to their game struct
+// Games
+// Map games names to their game struct
 var Games = make(map[string]Game)
 
-//Instances
-//Map of IDs to their game instance
+// Instances
+// Map of IDs to their game instance
 var Instances = make(map[string]*Instance)
 
-//AddGame
-//Adds a game to the game map
-func AddGame(Name string, Description string, Rules string, ExampleBoard [][]string, StartFunc func(*Instance), UpdateFunc func(*Instance, Output)) {
+// AddGame
+// Adds a game to the game map
+func AddGame(Name string, Description string, Rules string, ExampleBoard [][]string, StartFunc StartFunction, UpdateFunc updateFunction) {
 	game := Game{
 		Name:         Name,
 		Description:  Description,
@@ -83,17 +91,17 @@ func AddGame(Name string, Description string, Rules string, ExampleBoard [][]str
 	Games[strings.ToLower(Name)] = game
 }
 
-//UpdateGame
-//Sends an update of a game instance
+// UpdateGame
+// Sends an update of a game instance
 func UpdateGame(instance *Instance, Input Input) {
 	Current := instance.Players[instance.Turn]
 	Opponent := instance.Players[-(instance.Turn - 1)]
 
-	//Creates new embeds
+	// Creates new embeds
 	Embed := newEmbed()
 	SentEmb := newEmbed()
 
-	//Formats and sends message
+	// Formats and sends message
 	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
 	Embed.addField("Input", Input.Message, true)
 	Embed.setColor(Blue)
@@ -105,13 +113,13 @@ func UpdateGame(instance *Instance, Input Input) {
 		return
 	}
 
-	//Formats sent embed
+	// Formats sent embed
 	SentEmb.setColor(Green)
 
-	//Edits old message to sent
+	// Edits old message to sent
 	SentEmb.edit("Sent!", fmt.Sprintf("Sent %s update to %s", instance.Game.Name, Opponent.Name), Current.ChannelID, instance.CurrentMessageID)
 
-	//Adds the reactions to the message
+	// Adds the reactions to the message
 	err = addInput(Input, Opponent.ChannelID, newMessage.ID)
 	if err != nil {
 		log.Error(err.Error())
@@ -119,16 +127,16 @@ func UpdateGame(instance *Instance, Input Input) {
 		return
 	}
 
-	//Changes the turn
+	// Changes the turn
 	instance.Turn = -(instance.Turn - 1)
 
-	//Sets current input
+	// Sets current input
 	instance.CurrentInput = Input
 
-	//Sets current message ID
+	// Sets current message ID
 	instance.CurrentMessageID = newMessage.ID
 
-	//Save instances to JSON
+	// Save instances to JSON
 	err = saveInstances()
 	if err != nil {
 		log.Error(err.Error())
@@ -136,8 +144,8 @@ func UpdateGame(instance *Instance, Input Input) {
 	}
 }
 
-//StartGame
-//Starts an instance of a game
+// StartGame
+// Starts an instance of a game
 func StartGame(instance *Instance, Input Input) {
 	var Current Player
 	var Opponent Player
@@ -147,7 +155,7 @@ func StartGame(instance *Instance, Input Input) {
 	Current = instance.Players[0]
 	Opponent = instance.Players[1]
 
-	//Formats and sends the message
+	// Formats and sends the message
 	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
 	Embed.addField("Input", Input.Message, true)
 	Embed.setColor(Blue)
@@ -166,13 +174,13 @@ func StartGame(instance *Instance, Input Input) {
 		return
 	}
 
-	//Sets current input
+	// Sets current input
 	instance.CurrentInput = Input
 
-	//Sets current message ID
+	// Sets current message ID
 	instance.CurrentMessageID = newMessage.ID
 
-	//Save instances to JSON
+	// Save instances to JSON
 	err = saveInstances()
 	if err != nil {
 		log.Error(err.Error())
@@ -180,15 +188,15 @@ func StartGame(instance *Instance, Input Input) {
 	}
 }
 
-//EndGame
-//Ends a game with a winner and loser
+// EndGame
+// Ends a game with a winner and loser
 func EndGame(instance *Instance, Winner Player, Looser Player) {
 	Embed := newEmbed()
 
-	//Formats the embed
+	// Formats the embed
 	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
 
-	//Sets color and sends to winner
+	// Sets color and sends to winner
 	Embed.setColor(Yellow)
 	_, err := Embed.send(instance.Game.Name, fmt.Sprintf("You won your %s game against %s", instance.Game.Name, Looser.Name), Winner.ChannelID)
 	if err != nil {
@@ -197,7 +205,7 @@ func EndGame(instance *Instance, Winner Player, Looser Player) {
 		return
 	}
 
-	//Sets color and sends to looser
+	// Sets color and sends to looser
 	Embed.setColor(Red)
 	_, err = Embed.send(instance.Game.Name, fmt.Sprintf("You lost your %s game against %s", instance.Game.Name, Winner.Name), Looser.ChannelID)
 	if err != nil {
@@ -206,10 +214,10 @@ func EndGame(instance *Instance, Winner Player, Looser Player) {
 		return
 	}
 
-	//Removes instance from instances
+	// Removes instance from instances
 	delete(Instances, instance.ID)
 
-	//Save instances to JSON
+	// Save instances to JSON
 	err = saveInstances()
 	if err != nil {
 		log.Error(err.Error())
@@ -218,23 +226,23 @@ func EndGame(instance *Instance, Winner Player, Looser Player) {
 	}
 }
 
-//EditGame
-//Edits a current games message instead of sending a new one
+// EditGame
+// Edits a current games message instead of sending a new one
 func EditGame(instance *Instance, Input Input) {
-	//Gets players
+	// Gets players
 	Current := instance.Players[instance.Turn]
 	Opponent := instance.Players[-(instance.Turn - 1)]
 
-	//Creates a new embed
+	// Creates a new embed
 	Embed := newEmbed()
 
-	//Formats the player game board and sets color
+	// Formats the player game board and sets color
 	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
 	Embed.addField("Input", Input.Message, true)
 	Embed.setFooter(instance.ID, "", "")
 	Embed.setColor(Blue)
 
-	//Sends the new message
+	// Sends the new message
 	newMessage, err := Embed.send(instance.Game.Name, fmt.Sprintf("%s game against %s", instance.Game.Name, Opponent.Name), Current.ChannelID)
 	if err != nil {
 		log.Error(err.Error())
@@ -242,7 +250,7 @@ func EditGame(instance *Instance, Input Input) {
 		return
 	}
 
-	//Deletes the old message
+	// Deletes the old message
 	err = Session.ChannelMessageDelete(Current.ChannelID, instance.CurrentMessageID)
 	if err != nil {
 		log.Error(err.Error())
@@ -250,11 +258,11 @@ func EditGame(instance *Instance, Input Input) {
 		return
 	}
 
-	//Adds input field and gameID
+	// Adds input field and gameID
 	Embed.addField(Input.Message, Input.Name, false)
 	Embed.setFooter(instance.ID, "", "")
 
-	//Adds the reactions to the message
+	// Adds the reactions to the message
 	err = addInput(Input, Current.ChannelID, newMessage.ID)
 	if err != nil {
 		log.Error(err.Error())
@@ -262,13 +270,13 @@ func EditGame(instance *Instance, Input Input) {
 		return
 	}
 
-	//Sets current input
+	// Sets current input
 	instance.CurrentInput = Input
 
-	//Sets current message ID
+	// Sets current message ID
 	instance.CurrentMessageID = newMessage.ID
 
-	//Save instances to JSON
+	// Save instances to JSON
 	err = saveInstances()
 	if err != nil {
 		log.Error(err.Error())
@@ -277,16 +285,16 @@ func EditGame(instance *Instance, Input Input) {
 	}
 }
 
-//AbortGame
-//Aborts a currently running game for a given reason
+// AbortGame
+// Aborts a currently running game for a given reason
 func AbortGame(instance *Instance, reason string) {
-	//Creates and formats new embed
+	// Creates and formats new embed
 	Embed := newEmbed()
 	Embed.setColor(Red)
 	Embed.addField("Board", formatBoard(instance.DisplayBoard), true)
 	Embed.addField("Error", reason, true)
 
-	//Sends abort message to each player
+	// Sends abort message to each player
 	for _, p := range instance.Players {
 		_, err := Embed.send(fmt.Sprintf("%s Aborted", instance.Game.Name), fmt.Sprintf("This %s game has been aborted", instance.Game.Name), p.ChannelID)
 		if err != nil {
@@ -295,10 +303,10 @@ func AbortGame(instance *Instance, reason string) {
 		}
 	}
 
-	//Deletes game instance
+	// Deletes game instance
 	delete(Instances, instance.ID)
 
-	//Save instances to JSON
+	// Save instances to JSON
 	err := saveInstances()
 	if err != nil {
 		log.Error(err.Error())
@@ -306,8 +314,8 @@ func AbortGame(instance *Instance, reason string) {
 	}
 }
 
-//saveInstances
-//Marshals all instances into a JSON and then writes it to a file
+// saveInstances
+// Marshals all instances into a JSON and then writes it to a file
 func saveInstances() error {
 	instances := make(map[string]JSONInstance)
 
@@ -337,5 +345,5 @@ func saveInstances() error {
 	return nil
 }
 
-//savePlayerWins
-//Marshals all player win counts to a json then writes them to a file
+// savePlayerWins
+// Marshals all player win counts to a json then writes them to a file

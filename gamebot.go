@@ -1,7 +1,6 @@
 package main
 
 import (
-	_ "GameBot/commands"
 	bot "GameBot/core"
 	_ "GameBot/games"
 	"encoding/json"
@@ -14,10 +13,10 @@ import (
 )
 
 func main() {
-	//Seeds rand
+	// Seeds rand
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	//Unmarshalls instances JSON
+	// Unmarshalls instances JSON
 	file, err := os.Open("instances.json")
 	if err != nil {
 		log.Fatal(err.Error())
@@ -50,6 +49,6 @@ func main() {
 		}
 	}
 
-	// Start bot
+	//  Start bot
 	bot.Start()
 }

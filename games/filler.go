@@ -16,16 +16,18 @@ var boardKey = map[string]string{
 	"Purple": bot.PurpleSqr,
 }
 
+// fillerStart
+// Start function for filler
 func fillerStart(instance *bot.Instance) {
 	var reactions []string
 
-	//Generates a game board
+	// Generates a game board
 	for l := 0; l < 8; l++ {
 		var line []string
 		for i := 0; i < 8; i++ {
 			possibleColors := colors
 
-			//Removes adjacent colors
+			// Removes adjacent colors
 			if l > 0 {
 				possibleColors = bot.RemoveItems(possibleColors, []string{instance.Board[l-1][i]})
 			}
@@ -33,12 +35,12 @@ func fillerStart(instance *bot.Instance) {
 				possibleColors = bot.RemoveItems(possibleColors, []string{line[i-1]})
 			}
 
-			//Removes player1 color if its player0 color select
+			// Removes player1 color if its player0 color select
 			if l == 7 && i == 0 {
 				possibleColors = bot.RemoveItems(possibleColors, []string{instance.Board[0][7]})
 			}
 
-			//Picks a random color
+			// Picks a random color
 			color := possibleColors[rand.Intn(len(possibleColors))]
 			line = append(line, color)
 		}
@@ -95,13 +97,13 @@ func fillerUpdate(instance *bot.Instance, output bot.Output) {
 	var color string
 	var reactions []string
 
-	//Errors
+	// Errors
 	if len(output.SelOptions) > 1 {
 		bot.EditGame(instance, bot.CreateInput("Color", "You can only select 1 color", instance.CurrentInput.Options))
 		return
 	}
 
-	//Gets color value of output
+	// Gets color value of output
 	switch output.SelOptions[0] {
 	case "🟥":
 		color = "Red"
@@ -119,18 +121,18 @@ func fillerUpdate(instance *bot.Instance, output bot.Output) {
 		color = "Purple"
 	}
 
-	//Gets player value to search for
+	// Gets player value to search for
 	if instance.Turn == 0 {
 		searchVal = "0"
 	} else if instance.Turn == 1 {
 		searchVal = "1"
 	}
 
-	//Converts adjacent colors to player colors
+	// Converts adjacent colors to player colors
 	for l, line := range instance.Board {
 		for i, c := range line {
 			if c == searchVal {
-				//Checks horiz colors
+				// Checks horiz colors
 				if i > 0 {
 					if instance.Board[l][i-1] == color {
 						instance.Board[l][i-1] = searchVal
@@ -141,7 +143,7 @@ func fillerUpdate(instance *bot.Instance, output bot.Output) {
 						instance.Board[l][i+1] = searchVal
 					}
 				}
-				//Checks vert colors
+				// Checks vert colors
 				if l > 0 {
 					if instance.Board[l-1][i] == color {
 						instance.Board[l-1][i] = searchVal
@@ -156,11 +158,11 @@ func fillerUpdate(instance *bot.Instance, output bot.Output) {
 		}
 	}
 
-	//Defines new game stats
+	// Defines new game stats
 	instance.Stats["PlayerColors"][instance.Turn] = color
 	instance.Stats["DisallowedColors"] = []string{instance.Stats["PlayerColors"][0], instance.Stats["PlayerColors"][1]}
 
-	//Renders new display board
+	// Renders new display board
 	for l, line := range instance.Board {
 		for i, c := range line {
 			if c == "0" {
@@ -173,7 +175,7 @@ func fillerUpdate(instance *bot.Instance, output bot.Output) {
 		}
 	}
 
-	//Checks for win
+	// Checks for win
 out:
 	for i, l := range instance.Board {
 		var Count int
@@ -208,7 +210,7 @@ out:
 
 	input := bot.CreateInput("Color", "Select a color to switch to.\nYou are in the"+location, reactions)
 
-	//Sends update
+	// Sends update
 	bot.UpdateGame(instance, input)
 
 }

@@ -6,25 +6,25 @@ import (
 	"strings"
 )
 
-//TODO Also use buttons along with reactions
+// TODO Also use buttons along with reactions
 
-//Input
-//An input for a game update
+// Input
+// An input for a game update
 type Input struct {
 	Name    string
 	Message string
 	Options []string
 }
 
-//Output
-//The output of a games input (the things that were selected and by whom)
+// Output
+// The output of a games input (the things that were selected and by whom)
 type Output struct {
 	Name       string
 	SelOptions []string
 }
 
-//CreateInput
-//Creates an option
+// CreateInput
+// Creates an option
 func CreateInput(name string, message string, options []string) Input {
 	return Input{
 		Name:    name,
@@ -33,8 +33,8 @@ func CreateInput(name string, message string, options []string) Input {
 	}
 }
 
-//addInput
-//Adds an Input to a message
+// addInput
+// Adds an Input to a message
 func addInput(option Input, channelID string, messageID string) error {
 	for _, e := range option.Options {
 		err := Session.MessageReactionAdd(channelID, messageID, e)
@@ -50,44 +50,44 @@ func addInput(option Input, channelID string, messageID string) error {
 	return nil
 }
 
-//reactionHandler
-//Handles reactions for messages the bot has sent
+// reactionHandler
+// Handles reactions for messages the bot has sent
 func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	var output Output
 
-	//Ignores reactions added by the bot
+	// Ignores reactions added by the bot
 	if r.UserID == s.State.User.ID {
 		return
 	}
 
-	//Gets the message that the reaction was put on
+	// Gets the message that the reaction was put on
 	m, err := s.ChannelMessage(r.ChannelID, r.MessageID)
 	if err != nil {
 		log.Error(err.Error())
 	}
 
-	//Ignore messages that are not sent by the bot
+	// Ignore messages that are not sent by the bot
 	if m.Author.ID != s.State.User.ID {
 		return
 	}
 
-	//Ignores sent messages
+	// Ignores sent messages
 	if m.Embeds[0].Title == "Sent!" {
 		return
 	}
 
-	//Checks if the emoji is the confirmation emoji
+	// Checks if the emoji is the confirmation emoji
 	if r.Emoji.Name != "✅" {
 		return
 	}
 
-	//Gets the game
+	// Gets the game
 	game := Games[strings.ToLower(strings.Split(m.Embeds[0].Title, " ")[0])]
 
-	//TODO Add check if player has open dms
-	//Checks the message is a game invite
+	// TODO Add check if player has open dms
+	// Checks the message is a game invite
 	if len(strings.Split(m.Embeds[0].Title, " ")) > 1 {
-		//Checks if the reaction is from the opponent
+		// Checks if the reaction is from the opponent
 		Opponent, err := getUser(m.Embeds[0].Description[:21])
 		if err != nil {
 			log.Error(err.Error())
@@ -97,18 +97,18 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 			return
 		}
 
-		//Check for direct invite
+		// Check for direct invite
 		if cleanId(m.Embeds[0].Description[21:]) != "" && cleanId(m.Embeds[0].Description[21:]) != r.UserID {
 			return
 		}
 
-		//Deletes invite
+		// Deletes invite
 		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
 		if err != nil {
 			log.Error(err.Error())
 		}
 
-		//Get the user struct and dm channel for each player
+		// Get the user struct and dm channel for each player
 		Current, err := Session.User(r.UserID)
 		if err != nil {
 			log.Error(err.Error())
@@ -128,7 +128,7 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 			return
 		}
 
-		//Creates and defines a new instance
+		// Creates and defines a new instance
 		instance := Instance{
 			ID:    uuid.NewString(),
 			Game:  game,
@@ -146,7 +146,7 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		}
 		Instances[instance.ID] = &instance
 
-		//Starts a new game
+		// Starts a new game
 		go game.StartFunc(&instance)
 
 		return
@@ -158,7 +158,7 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	}
 	output.Name = instance.CurrentInput.Name
 
-	//Gets all valid reactions to the message
+	// Gets all valid reactions to the message
 	for i, e := range m.Reactions {
 		if e.Count == 2 && e.Emoji.Name != "✅" {
 			output.SelOptions = append(output.SelOptions, e.Emoji.Name)
@@ -167,6 +167,6 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		}
 	}
 
-	//Updates the game
+	// Updates the game
 	go game.UpdateFunc(instance, output)
 }

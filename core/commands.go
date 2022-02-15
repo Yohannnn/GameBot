@@ -6,33 +6,34 @@ import (
 	"strings"
 )
 
-//TODO Switch to slash commands
-//TODO Add admin commands
-//TODO Switch to modular commands
-//Handler for handling commands
+// TODO Switch to slash commands
+// TODO Add admin commands
+
+// commandHandler
+// Handler for handling commands
 func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	//Defers panic to error handler
+	// Defers panic to error handler
 	defer handleCommandError(m.GuildID, m.ChannelID, m.Author.ID)
 	var newMessage *discordgo.Message
 
-	//Ignore all messages created by the bot itself
+	// Ignore all messages created by the bot itself
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
 
-	//Checks if the message has the command prefix
+	// Checks if the message has the command prefix
 	if string(m.Content[0]) != "!" {
 		return
 	}
 
-	//Parses the message for the command and arguments
+	// Parses the message for the command and arguments
 	command := strings.ToLower(strings.Split(m.Content, " ")[0][1:])
 	args := strings.Split(m.Content, " ")[1:]
 
-	//Switch case for handling commands
+	// Switch case for handling commands
 	switch command {
 
-	//Gives a list of all games
+	// Gives a list of all games
 	case "gamelist":
 		var names string
 		for _, g := range Games {
@@ -47,22 +48,22 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-		//Deletes the command message
+		// Deletes the command message
 		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
 		if err != nil {
 			log.Error(err.Error())
 		}
 
-	//Creates an invite to a game
+	// Creates an invite to a game
 	case "gameinvite":
-		//Pares args for gameInfo
+		// Pares args for gameInfo
 		game := Games[strings.ToLower(args[0])]
 
-		//Formats Embed message
+		// Formats Embed message
 		Embed := newEmbed()
 		Embed.setColor(Green)
 
-		//Sets invite channel and description
+		// Sets invite channel and description
 		if len(args) >= 2 {
 			var err error
 			newMessage, err = Embed.send(fmt.Sprintf("%s invite!", game.Name), fmt.Sprintf(
@@ -83,24 +84,24 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		}
 
-		//Adds confirmation emoji
+		// Adds confirmation emoji
 		err := s.MessageReactionAdd(m.ChannelID, newMessage.ID, "✅")
 		if err != nil {
 			log.Error(err.Error())
 			return
 		}
 
-		//Deletes the command message
+		// Deletes the command message
 		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
 		if err != nil {
 			log.Error(err.Error())
 		}
 
-	//Gives the info for a game
+	// Gives the info for a game
 	case "gameinfo":
-		//Creates a new Embed
+		// Creates a new Embed
 		Embed := newEmbed()
-		//Checks if game exits
+		// Checks if game exits
 		if _, ok := Games[args[0]]; !ok {
 			Embed.setColor(14495300)
 			_, err := Embed.send(m.ChannelID, "Error!", "The requested game does not exist.")
@@ -109,9 +110,9 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				return
 			}
 		}
-		//Parses args for gameInfo
+		// Parses args for gameInfo
 		game := Games[args[0]]
-		//Formats and sends Embed message
+		// Formats and sends Embed message
 		Embed.addField("Rules", game.Rules, true)
 		Embed.addField("Board", formatBoard(game.ExampleBoard), true)
 		Embed.setColor(Blue)
@@ -121,36 +122,7 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-		//Deletes the command message
-		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
-		if err != nil {
-			log.Error(err.Error())
-		}
-
-		//Gives the amount of wins per game
-	case "wins":
-		//Creates a new Embed
-		Embed := newEmbed()
-		//Checks if game exits
-		if _, ok := Games[args[0]]; !ok {
-			Embed.setColor(14495300)
-			_, err := Embed.send(m.ChannelID, "Error!", "The requested game does not exist.")
-			if err != nil {
-				log.Error(err.Error())
-				return
-			}
-		}
-		//Parses args for gameInfo
-		game := Games[args[0]]
-		//Formats and sends Embed message
-		Embed.setColor(Yellow)
-		_, err := Embed.send(game.Name+" wins", fmt.Sprintf("%s has %d wins in %s", m.Author.Mention(), PlayersWins[m.Author.ID][game.Name], game.Name), m.ChannelID)
-		if err != nil {
-			log.Error(err.Error())
-			return
-		}
-
-		//Deletes the command message
+		// Deletes the command message
 		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
 		if err != nil {
 			log.Error(err.Error())
@@ -158,6 +130,8 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+// handleCommandError
+// Handles errors for commands
 func handleCommandError(gID string, cId string, uId string) {
 	if r := recover(); r != nil {
 		log.Errorf("Message from %s in %s in %s caused: %s", uId, cId, gID, r)
