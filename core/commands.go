@@ -4,10 +4,15 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"strings"
+	"sync"
 )
 
 // TODO Switch to modular commands
 // TODO Add admin commands
+
+// commandLock
+// Used to check if command handler is running
+var commandLock = &sync.Mutex{}
 
 // Command
 // Struct that contains data for a command
@@ -37,6 +42,13 @@ var Commands = make(map[string]*Command)
 // commandHandler
 // Handler for handling commands
 func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	// Graceful termination check
+	if graceTerm {
+		return
+	}
+	commandLock.Lock()
+	defer commandLock.Unlock()
+
 	// Defers panic to error handler
 	defer handleCommandError(m.GuildID, m.ChannelID, m.Author.ID)
 	var newMessage *discordgo.Message

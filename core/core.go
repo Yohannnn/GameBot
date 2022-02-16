@@ -16,14 +16,13 @@ import (
 // The session of the bot
 var Session *discordgo.Session
 
-// TODO Rework logging
 // log
 // The logger for the bot
 var log = tlog.NewTaggedLogger("BotCore", tlog.NewColor("38;5;111"))
 
 // graceTerm
 // Used to check when the bot is terminating
-var graceTerm = true
+var graceTerm bool
 
 // botAdmins
 // A list of user IDs that are designated as "Bot Administrators"
@@ -44,7 +43,6 @@ func IsCommand(trigger string) bool {
 	return false
 }
 
-// TODO Wait for some game functions to finish before terminating
 // TODO Repair broken inputs on startup
 // TODO Bot admins
 
@@ -74,6 +72,27 @@ func Start() {
 		return
 	}
 
+	// Checks for broken inputs and repairs them
+	log.Info("Checking for and repairing broken inputs")
+	for _, inst := range Instances {
+		currentMessage, err := Session.ChannelMessage(inst.Players[inst.Turn].ChannelID, inst.CurrentMessageID)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		for _, r := range currentMessage.Reactions {
+			if !Contains(inst.CurrentInput.Options, r.Emoji.ID) && !Contains(inst.CurrentInput.Options, r.Emoji.Name) && r.Emoji.Name != "✅" {
+				err = addInput(inst.CurrentInput, inst.Players[inst.Turn].ChannelID, inst.CurrentMessageID)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
+				log.Infof("Repaired input for %s", inst.ID)
+				break
+			}
+		}
+	}
+
 	// Starts go routine for status
 	go setStatus()
 
@@ -89,9 +108,26 @@ func Start() {
 	<-sigChannel
 
 	log.Info("Received TERM signal, terminating gracefully.")
+	graceTerm = true
 
-	// Waits 10 seconds
-	time.Sleep(time.Second * 10)
+	// Make a second sig channel that will respond to user term signal immediately
+	sigInstant := make(chan os.Signal, 1)
+	signal.Notify(sigInstant, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+
+	// Waits for reaction and command handler to finish
+	go func() {
+		log.Info("Waiting for reaction handler to finish")
+		reactionLock.Lock()
+		log.Info("Reaction handler stopped gracefully")
+		log.Info("Waiting for command handler to finish")
+		commandLock.Lock()
+		log.Info("Command handler stopped gracefully")
+		// Send our own signal to the instant sig channel
+		sigInstant <- syscall.SIGTERM
+	}()
+
+	// Keep the thread blocked until the above goroutine finishes closing all handlers, or until another TERM is received
+	<-sigInstant
 
 	// Close session when finished
 	err = Session.Close()
@@ -99,7 +135,7 @@ func Start() {
 
 func setStatus() {
 	var currentCount int
-	for {
+	for !graceTerm {
 		if len(Instances) != currentCount {
 			err := Session.UpdateGameStatus(0, fmt.Sprintf("%d Games", len(Instances)))
 			if err != nil {

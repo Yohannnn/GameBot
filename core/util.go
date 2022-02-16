@@ -3,7 +3,6 @@ package core
 import (
 	"errors"
 	"github.com/bwmarrin/discordgo"
-	"reflect"
 	"regexp"
 	"strings"
 )
@@ -168,15 +167,12 @@ func (e *embed) setColor(clr int) {
 
 // Contains
 // Checks if an array contains an element
-func Contains(arrayType interface{}, item interface{}) bool {
-	arr := reflect.ValueOf(arrayType)
-
-	for i := 0; i < arr.Len(); i++ {
-		if arr.Index(i).Interface() == item {
+func Contains(s []string, item string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] == item {
 			return true
 		}
 	}
-
 	return false
 }
 

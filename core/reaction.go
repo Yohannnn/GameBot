@@ -4,7 +4,12 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 	"strings"
+	"sync"
 )
+
+// reactionLock
+// Used to check if reaction handler is running
+var reactionLock = &sync.Mutex{}
 
 // Input
 // An input for a game update
@@ -33,8 +38,8 @@ func CreateInput(name string, message string, options []string) Input {
 
 // addInput
 // Adds an Input to a message
-func addInput(option Input, channelID string, messageID string) error {
-	for _, e := range option.Options {
+func addInput(input Input, channelID string, messageID string) error {
+	for _, e := range input.Options {
 		err := Session.MessageReactionAdd(channelID, messageID, e)
 		if err != nil {
 			return err
@@ -51,6 +56,12 @@ func addInput(option Input, channelID string, messageID string) error {
 // reactionHandler
 // Handles reactions for messages the bot has sent
 func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+	// Graceful termination check
+	if graceTerm {
+		return
+	}
+	reactionLock.Lock()
+	defer reactionLock.Unlock()
 
 	var output Output
 
