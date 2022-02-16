@@ -52,13 +52,15 @@ func Start() {
 	// Load token
 	err := godotenv.Load("./.env")
 	if err != nil {
-		log.Error(err.Error())
+		log.Panicf("Error when starting bot: %s", err.Error())
+		return
 	}
 
 	// Create a new Discord session
 	Session, err = discordgo.New("Bot " + os.Getenv("Token"))
 	if err != nil {
-		log.Error(err.Error())
+		log.Panicf("Error when starting bot: %s", err.Error())
+		return
 	}
 
 	// Add Handlers
@@ -68,7 +70,7 @@ func Start() {
 	// Start discord session
 	err = Session.Open()
 	if err != nil {
-		log.Error(err.Error())
+		log.Panicf("Error when starting bot: %s", err.Error())
 		return
 	}
 
@@ -77,14 +79,14 @@ func Start() {
 	for _, inst := range Instances {
 		currentMessage, err := Session.ChannelMessage(inst.Players[inst.Turn].ChannelID, inst.CurrentMessageID)
 		if err != nil {
-			log.Error(err.Error())
+			log.Errorf("Error when repairing inputs: %s", err.Error())
 			return
 		}
 		for _, r := range currentMessage.Reactions {
 			if !Contains(inst.CurrentInput.Options, r.Emoji.ID) && !Contains(inst.CurrentInput.Options, r.Emoji.Name) && r.Emoji.Name != "✅" {
 				err = addInput(inst.CurrentInput, inst.Players[inst.Turn].ChannelID, inst.CurrentMessageID)
 				if err != nil {
-					log.Error(err.Error())
+					log.Errorf("Error when repairing inputs: %s", err.Error())
 					return
 				}
 				log.Infof("Repaired input for %s", inst.ID)
@@ -139,7 +141,7 @@ func setStatus() {
 		if len(Instances) != currentCount {
 			err := Session.UpdateGameStatus(0, fmt.Sprintf("%d Games", len(Instances)))
 			if err != nil {
-				log.Error(err.Error())
+				log.Errorf("Error when setting status: %s", err.Error())
 				return
 			}
 			currentCount = len(Instances)

@@ -73,7 +73,8 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	// Gets the message that the reaction was put on
 	m, err := s.ChannelMessage(r.ChannelID, r.MessageID)
 	if err != nil {
-		log.Error(err.Error())
+		log.Errorf("Error when handling reaction: %s", err.Error())
+		return
 	}
 
 	// Ignore messages that are not sent by the bot
@@ -100,7 +101,7 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		// Checks if the reaction is from the opponent
 		Opponent, err := getUser(m.Embeds[0].Description[:21])
 		if err != nil {
-			log.Error(err.Error())
+			log.Errorf("Error when handling reaction: %s", err.Error())
 			return
 		}
 		if r.UserID == Opponent.ID {
@@ -115,26 +116,26 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		// Deletes invite
 		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
 		if err != nil {
-			log.Error(err.Error())
+			log.Errorf("Error when handling reaction: %s", err.Error())
 		}
 
 		// Get the user struct and dm channel for each player
 		Current, err := Session.User(r.UserID)
 		if err != nil {
-			log.Error(err.Error())
+			log.Errorf("Error when handling reaction: %s", err.Error())
 			return
 		}
 
 		CurrentChan, err := Session.UserChannelCreate(Current.ID)
 		if err != nil {
-			log.Error(err.Error())
+			log.Errorf("Error when handling reaction: %s", err.Error())
 			return
 
 		}
 
 		OpponentChan, err := Session.UserChannelCreate(Opponent.ID)
 		if err != nil {
-			log.Error(err.Error())
+			log.Errorf("Error when handling reaction: %s", err.Error())
 			return
 		}
 

@@ -187,7 +187,7 @@ func formatBoard(board [][]string) string {
 			if strings.Contains(e, ":") {
 				emoji, err := Session.State.Emoji("806048328973549578", e)
 				if err != nil {
-					log.Error(err.Error())
+					log.Errorf("Error when formatting board: %s", err.Error())
 					return ""
 				}
 				LineString += emoji.MessageFormat() + "‌"
@@ -219,7 +219,7 @@ func RemoveItems(slice []string, deleteables []string) []string {
 func ensureNumbers(in string) string {
 	reg, err := regexp.Compile("[^0-9]+")
 	if err != nil {
-		log.Errorf("An unrecoverable error occurred when compiling a regex expression: %s", err)
+		log.Errorf("Error when ensuring numbers: %s", err)
 		return ""
 	}
 

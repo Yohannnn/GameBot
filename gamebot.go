@@ -19,20 +19,19 @@ func main() {
 	// Unmarshalls instances JSON
 	file, err := os.Open("instances.json")
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatalf("Error when unmarshalling instances JSON: %s", err.Error())
 	}
 	defer file.Close()
 
 	byteval, err := ioutil.ReadAll(file)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatalf("Error when unmarshalling instances JSON: %s", err.Error())
 	}
 
 	JSONInstances := make(map[string]bot.JSONInstance)
 	err = json.Unmarshal(byteval, &JSONInstances)
 	if err != nil {
-		log.Fatal(err.Error())
-
+		log.Fatalf("Error when unmarshalling instances JSON: %s", err.Error())
 	}
 
 	for ID, inst := range JSONInstances {
