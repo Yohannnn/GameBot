@@ -6,8 +6,33 @@ import (
 	"strings"
 )
 
-// TODO Switch to slash commands
+// TODO Switch to modular commands
 // TODO Add admin commands
+
+// Command
+// Struct that contains data for a command
+type Command struct {
+	Admin    bool
+	Name     string
+	Function CommandFunc
+}
+
+// Ctx
+// Context for a command
+type Ctx struct {
+	MessageID string
+	ChannelID string
+	Args      []string
+	Author    *discordgo.User
+}
+
+// CommandFunc
+// Function for a command
+type CommandFunc func(*Ctx)
+
+// Commands
+// Map of triggers to their corresponding command
+var Commands = make(map[string]*Command)
 
 // commandHandler
 // Handler for handling commands
@@ -54,7 +79,7 @@ func commandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			log.Error(err.Error())
 		}
 
-	// Creates an invite to a game
+	// Creates an invitation to a game
 	case "gameinvite":
 		// Pares args for gameInfo
 		game := Games[strings.ToLower(args[0])]

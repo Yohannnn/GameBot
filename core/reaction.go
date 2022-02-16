@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-// TODO Also use buttons along with reactions
-
 // Input
 // An input for a game update
 type Input struct {
@@ -53,6 +51,7 @@ func addInput(option Input, channelID string, messageID string) error {
 // reactionHandler
 // Handles reactions for messages the bot has sent
 func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+
 	var output Output
 
 	// Ignores reactions added by the bot
@@ -146,8 +145,7 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		}
 		Instances[instance.ID] = &instance
 
-		// Starts a new game
-		go game.StartFunc(&instance)
+		game.StartFunc(&instance)
 
 		return
 	}
@@ -168,5 +166,5 @@ func reactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	}
 
 	// Updates the game
-	go game.UpdateFunc(instance, output)
+	game.UpdateFunc(instance, output)
 }
